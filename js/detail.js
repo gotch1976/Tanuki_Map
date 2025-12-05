@@ -129,26 +129,24 @@ function initMiniMap(latitude, longitude) {
   const mapDiv = document.getElementById('miniMap');
   if (!mapDiv) return;
 
-  miniMap = L.map('miniMap').setView([latitude, longitude], 15);
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(miniMap);
-
-  // マーカーを追加
-  const tanukiIcon = L.icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
+  miniMap = new google.maps.Map(document.getElementById('miniMap'), {
+    center: { lat: latitude, lng: longitude },
+    zoom: 15
   });
 
-  L.marker([latitude, longitude], { icon: tanukiIcon })
-    .addTo(miniMap)
-    .bindPopup('🦝 たぬきの場所')
-    .openPopup();
+  // マーカーを追加
+  const marker = new google.maps.Marker({
+    position: { lat: latitude, lng: longitude },
+    map: miniMap,
+    icon: {
+      url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
+    }
+  });
+
+  const infoWindow = new google.maps.InfoWindow({
+    content: '🦝 たぬきの場所'
+  });
+  infoWindow.open(miniMap, marker);
 }
 
 // アクションボタンの表示制御

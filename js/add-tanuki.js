@@ -174,7 +174,7 @@ function getCurrentLocation() {
 
       // 地図も移動
       if (map) {
-        map.setView([lat, lng], DEFAULT_MAP_ZOOM);
+        map.setCenter({ lat, lng });
       }
 
       hideLoading();

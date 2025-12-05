@@ -6,17 +6,29 @@ let selectedLocation = null;
 
 // 地図の初期化
 function initMap() {
-  // 地図を作成
-  map = L.map('map').setView(
-    [DEFAULT_MAP_CENTER.lat, DEFAULT_MAP_CENTER.lng],
-    DEFAULT_MAP_ZOOM
-  );
+  console.log('initMap() 開始');
+  const mapElement = document.getElementById('map');
+  console.log('地図要素:', mapElement);
 
-  // OpenStreetMapのタイルを追加
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    maxZoom: 19
-  }).addTo(map);
+  if (!mapElement) {
+    console.error('地図要素が見つかりません');
+    return;
+  }
+
+  // 地図を作成
+  try {
+    map = new google.maps.Map(mapElement, {
+      center: {
+        lat: DEFAULT_MAP_CENTER.lat,
+        lng: DEFAULT_MAP_CENTER.lng
+      },
+      zoom: DEFAULT_MAP_ZOOM
+    });
+    console.log('地図作成成功:', map);
+  } catch (error) {
+    console.error('地図作成エラー:', error);
+    return;
+  }
 
   // 現在地を取得
   if (navigator.geolocation) {
@@ -24,19 +36,22 @@ function initMap() {
       (position) => {
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
-        map.setView([lat, lng], DEFAULT_MAP_ZOOM);
+        map.setCenter({ lat, lng });
+        map.setZoom(DEFAULT_MAP_ZOOM);
 
         // 現在地にマーカーを表示(オプション)
-        L.marker([lat, lng], {
-          icon: L.icon({
-            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-            iconSize: [25, 41],
-            iconAnchor: [12, 41],
-            popupAnchor: [1, -34],
-            shadowSize: [41, 41]
-          })
-        }).addTo(map).bindPopup('📍 現在地');
+        const marker = new google.maps.Marker({
+          position: { lat, lng },
+          map: map,
+          icon: {
+            url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+          }
+        });
+
+        const infoWindow = new google.maps.InfoWindow({
+          content: '📍 現在地'
+        });
+        infoWindow.open(map, marker);
       },
       (error) => {
         console.log('現在地取得エラー:', error);
@@ -45,9 +60,12 @@ function initMap() {
   }
 
   // 地図クリックでたぬき追加位置を設定
-  map.on('click', (e) => {
+  map.addListener('click', (e) => {
     if (currentUser) {
-      selectedLocation = e.latlng;
+      selectedLocation = {
+        lat: e.latLng.lat(),
+        lng: e.latLng.lng()
+      };
       console.log('選択した位置:', selectedLocation);
     }
   });
@@ -74,7 +92,7 @@ async function loadTanukis() {
       .get();
 
     // 既存のマーカーを削除
-    markers.forEach(marker => map.removeLayer(marker));
+    markers.forEach(marker => marker.setMap(null));
     markers = [];
 
     // 各たぬきのマーカーを追加
@@ -101,17 +119,13 @@ function addMarker(tanuki) {
   const { latitude, longitude } = tanuki.location;
 
   // カスタムアイコン(たぬき)
-  const tanukiIcon = L.icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
+  const marker = new google.maps.Marker({
+    position: { lat: latitude, lng: longitude },
+    map: map,
+    icon: {
+      url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
+    }
   });
-
-  const marker = L.marker([latitude, longitude], { icon: tanukiIcon })
-    .addTo(map);
 
   // ポップアップの内容(写真なしバージョン)
   const popupContent = `
@@ -123,20 +137,21 @@ function addMarker(tanuki) {
     </div>
   `;
 
-  marker.bindPopup(popupContent, { maxWidth: 300 });
+  const infoWindow = new google.maps.InfoWindow({
+    content: popupContent,
+    maxWidth: 300
+  });
+
+  marker.addListener('click', () => {
+    infoWindow.open(map, marker);
+  });
+
   markers.push(marker);
 }
 
-// アプリ初期化
-document.addEventListener('DOMContentLoaded', () => {
-  // Leafletが読み込まれているか確認
-  if (typeof L === 'undefined') {
-    console.error('Leafletが読み込まれていません');
-    showError('地図ライブラリの読み込みに失敗しました。ページを再読み込みしてください。');
-    return;
-  }
-
-  console.log('Leaflet読み込み完了');
+// Google Maps APIのコールバック関数（グローバルに定義）
+window.initializeApp = function() {
+  console.log('Google Maps APIコールバック実行');
 
   // Firebase初期化
   if (!initFirebase()) {
@@ -154,4 +169,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // たぬき追加機能初期化
   initAddTanuki();
-});
+};
