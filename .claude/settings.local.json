@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(npm config:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(killall:*)"
     ],
     "deny": [],
     "ask": []
