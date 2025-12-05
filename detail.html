@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>たぬき詳細 | Tanuki Map</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <!-- カスタムCSS -->
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/detail.css">
+</head>
+<body>
+  <!-- ヘッダー -->
+  <header>
+    <div class="header-container">
+      <button id="backBtn" class="btn-secondary">← 戻る</button>
+      <h1>🦝 たぬき詳細</h1>
+      <div id="userInfo" style="display: none;">
+        <img id="userPhoto" alt="User" class="user-photo">
+        <span id="userName"></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- 詳細コンテンツ -->
+  <div class="detail-container">
+    <div class="detail-content">
+      <!-- 写真なしバージョン -->
+      <!-- <div class="photo-section">
+        <img id="tanukiPhoto" alt="たぬきの写真">
+      </div> -->
+
+      <!-- 情報 -->
+      <div class="info-section">
+        <h2>📖 エピソード</h2>
+        <p id="episode"></p>
+
+        <h3>📍 場所</h3>
+        <p id="location"></p>
+        <div id="miniMap" style="height: 200px; margin: 10px 0;"></div>
+
+        <h3>🎨 特徴</h3>
+        <p id="characteristics">-</p>
+
+        <h3>📅 発見日</h3>
+        <p id="discoveryDate">-</p>
+
+        <h3>👤 投稿者</h3>
+        <p id="poster">-</p>
+
+        <!-- note記事リンク -->
+        <div id="noteSection" style="display: none;">
+          <h3>📝 関連記事</h3>
+          <a id="noteLink" href="#" target="_blank" rel="noopener noreferrer" class="btn-primary">note記事を読む</a>
+        </div>
+
+        <!-- アクションボタン -->
+        <div class="action-buttons">
+          <button id="editBtn" class="btn-secondary" style="display: none;">編集</button>
+          <button id="deleteBtn" class="btn-danger" style="display: none;">削除</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ローディング -->
+  <div id="loading" class="loading">
+    読み込み中...
+  </div>
+
+  <!-- Leaflet JavaScript -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+
+  <!-- アプリのJavaScript -->
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/firebase-init.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/detail.js"></script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="lib/leaflet.css" />
+  <script src="lib/leaflet.js"></script>
+</head>
+<body>
+  <h1>Leaflet Test</h1>
+  <div id="map" style="height: 400px;"></div>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('DOM ready');
+      console.log('typeof L:', typeof L);
+      if (typeof L !== 'undefined') {
+        console.log('SUCCESS: Leaflet loaded');
+        const map = L.map('map').setView([35.6762, 139.6503], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+      } else {
+        console.error('FAILED: Leaflet not loaded');
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 管理者チェック用のヘルパー関数
+    function isAdmin() {
+      // config/adminsドキュメントから管理者リストを取得
+      let adminDoc = get(/databases/$(database)/documents/config/admins);
+      return request.auth.token.email in adminDoc.data.emails;
+    }
+
+    // たぬきコレクション
+    match /tanukis/{tanukiId} {
+      // 誰でもアクティブなたぬきを閲覧可能
+      allow read: if resource.data.status == 'active';
+
+      // ログインユーザーのみ作成可能
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.status == 'active';
+
+      // 投稿者本人または管理者のみ更新可能
+      allow update: if request.auth != null
+                    && (resource.data.userId == request.auth.uid || isAdmin());
+
+      // 投稿者本人または管理者のみ削除可能
+      allow delete: if request.auth != null
+                    && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // 設定コレクション(管理者リスト)
+    match /config/{document} {
+      // 認証済みユーザーは閲覧可能
+      allow read: if request.auth != null;
+      // 書き込みは不可(Firebase Consoleから手動設定)
+      allow write: if false;
+    }
+  }
+}

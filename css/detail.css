@@ -1,0 +1,105 @@
+/* 詳細ページのスタイル */
+
+.detail-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.detail-content {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+/* 写真セクション */
+.photo-section {
+  width: 100%;
+  max-height: 500px;
+  overflow: hidden;
+  background-color: #f5f5f5;
+}
+
+.photo-section img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* 情報セクション */
+.info-section {
+  padding: 2rem;
+}
+
+.info-section h2 {
+  font-size: 1.5rem;
+  color: #8B4513;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #8B4513;
+}
+
+.info-section h3 {
+  font-size: 1.1rem;
+  color: #495057;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.info-section p {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+/* ミニマップ */
+#miniMap {
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid #dee2e6;
+}
+
+/* note セクション */
+#noteSection {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #dee2e6;
+}
+
+#noteLink {
+  display: inline-block;
+  margin-top: 0.5rem;
+}
+
+/* アクションボタン */
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #dee2e6;
+}
+
+@media (max-width: 768px) {
+  .detail-container {
+    padding: 1rem;
+  }
+
+  .info-section {
+    padding: 1rem;
+  }
+
+  .photo-section {
+    max-height: 300px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+
+  .action-buttons button {
+    width: 100%;
+  }
+}

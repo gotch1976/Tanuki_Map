@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>たぬきマップ | Tanuki Map</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="lib/leaflet.css" />
+
+  <!-- カスタムCSS -->
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/map.css">
+
+  <!-- PWA設定 -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#8B4513">
+</head>
+<body>
+  <!-- ヘッダー -->
+  <header>
+    <div class="header-container">
+      <h1>🦝 たぬきマップ</h1>
+      <div class="header-actions">
+        <button id="listViewBtn" class="btn-secondary">リスト表示</button>
+        <div id="userInfo" style="display: none;">
+          <img id="userPhoto" alt="User" class="user-photo">
+          <span id="userName"></span>
+          <button id="logoutBtn" class="btn-secondary">ログアウト</button>
+        </div>
+        <button id="loginBtn" class="btn-primary">Googleでログイン</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 地図コンテナ -->
+  <div id="map"></div>
+
+  <!-- たぬき追加ボタン(ログイン時のみ表示) -->
+  <button id="addTanukiBtn" class="fab" style="display: none;" title="たぬきを追加">
+    ➕
+  </button>
+
+  <!-- たぬき追加モーダル -->
+  <div id="addTanukiModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle">たぬきを追加</h2>
+        <button class="modal-close" id="closeModal">&times;</button>
+      </div>
+      <form id="tanukiForm">
+        <!-- 写真アップロード機能は無効化(Storageなしバージョン) -->
+        <!-- <div class="form-group">
+          <label for="photoInput">📸 写真 *</label>
+          <input type="file" id="photoInput" accept="image/*" capture="environment" required>
+          <div id="photoPreview"></div>
+        </div> -->
+
+        <div class="form-group">
+          <label for="episodeInput">📖 エピソード *</label>
+          <textarea id="episodeInput" rows="4" placeholder="このたぬきはどこで見つけましたか?" required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="characteristicsInput">🎨 特徴(オプション)</label>
+          <input type="text" id="characteristicsInput" placeholder="例: 赤いスカーフ、大きい">
+        </div>
+
+        <div class="form-group">
+          <label for="noteUrlInput">🔗 note記事URL(オプション)</label>
+          <input type="url" id="noteUrlInput" placeholder="https://note.com/...">
+          <small>既にnoteで記事を書いている場合、URLを入力してください</small>
+        </div>
+
+        <div class="form-group">
+          <label for="discoveryDateInput">📅 発見日(オプション)</label>
+          <input type="date" id="discoveryDateInput">
+        </div>
+
+        <div class="form-group">
+          <label>📍 位置情報</label>
+          <p id="locationInfo">地図をクリックするか、現在地を取得してください</p>
+          <button type="button" id="getCurrentLocation" class="btn-secondary">現在地を取得</button>
+        </div>
+
+        <input type="hidden" id="latitudeInput">
+        <input type="hidden" id="longitudeInput">
+        <input type="hidden" id="tanukiId">
+
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" id="cancelBtn">キャンセル</button>
+          <button type="submit" class="btn-primary" id="submitBtn">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ローディング -->
+  <div id="loading" class="loading">
+    読み込み中...
+  </div>
+
+  <!-- Leaflet JavaScript -->
+  <script src="lib/leaflet.js"></script>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+
+  <!-- アプリのJavaScript -->
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/firebase-init.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/add-tanuki.js"></script>
+  <script src="js/map.js"></script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+/* 地図ページのスタイル */
+
+#map {
+  position: fixed;
+  top: 60px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+}
+
+/* フローティングアクションボタン(FAB) */
+.fab {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: #8B4513;
+  color: white;
+  font-size: 2rem;
+  border: none;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  cursor: pointer;
+  z-index: 1001;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fab:hover {
+  background-color: #6d3410;
+  transform: scale(1.1);
+}
+
+.fab:active {
+  transform: scale(0.95);
+}
+
+/* ポップアップのスタイル */
+.tanuki-popup {
+  padding: 0.5rem;
+  max-width: 250px;
+}
+
+.tanuki-popup img {
+  margin-bottom: 0.5rem;
+}
+
+.tanuki-popup h3 {
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  color: #8B4513;
+}
+
+.tanuki-popup p {
+  font-size: 0.8rem;
+  margin-bottom: 0.25rem;
+  color: #666;
+}
+
+.tanuki-popup a {
+  font-size: 0.9rem;
+}
+
+/* 写真プレビュー */
+#photoPreview {
+  margin-top: 0.5rem;
+}
+
+#photoPreview img {
+  max-width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* 位置情報セクション */
+#locationInfo {
+  padding: 0.5rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  #map {
+    top: 70px;
+  }
+
+  .fab {
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+    bottom: 1rem;
+    right: 1rem;
+  }
+}

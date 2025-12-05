@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>たぬきリスト | Tanuki Map</title>
+
+  <!-- カスタムCSS -->
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/list.css">
+</head>
+<body>
+  <!-- ヘッダー -->
+  <header>
+    <div class="header-container">
+      <button id="backBtn" class="btn-secondary">← 地図に戻る</button>
+      <h1>🦝 たぬきリスト</h1>
+      <div id="userInfo" style="display: none;">
+        <img id="userPhoto" alt="User" class="user-photo">
+        <span id="userName"></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- リストコンテナ -->
+  <div class="list-container">
+    <div class="list-header">
+      <p id="tanukiCount">読み込み中...</p>
+    </div>
+    <div id="tanukiList" class="tanuki-grid">
+      <!-- たぬきカードがここに表示されます -->
+    </div>
+  </div>
+
+  <!-- ローディング -->
+  <div id="loading" class="loading">
+    読み込み中...
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+
+  <!-- アプリのJavaScript -->
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/firebase-init.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/list.js"></script>
+</body>
+</html>

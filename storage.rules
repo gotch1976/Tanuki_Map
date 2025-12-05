@@ -1,0 +1,28 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // たぬきの写真
+    match /tanukis/{tanukiId}/{fileName} {
+      // 誰でも閲覧可能
+      allow read: if true;
+
+      // ログインユーザーのみアップロード可能
+      // 画像ファイルのみ、5MB以下
+      allow create: if request.auth != null
+                    && request.resource.size < 5 * 1024 * 1024
+                    && request.resource.contentType.matches('image/.*');
+
+      // Firestoreからたぬきドキュメントを取得
+      function getTanuki() {
+        return firestore.get(/databases/(default)/documents/tanukis/$(tanukiId));
+      }
+
+      // 投稿者本人または管理者のみ更新・削除可能
+      // ※管理者チェックは簡易版(メールアドレス直接比較)
+      allow update, delete: if request.auth != null
+                            && (getTanuki().data.userId == request.auth.uid
+                                || request.auth.token.email == 'your-email@gmail.com');
+    }
+  }
+}

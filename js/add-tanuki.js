@@ -1,0 +1,322 @@
+// たぬき追加・編集機能
+
+let editingTanukiId = null;
+let selectedPhoto = null;
+
+// 初期化
+function initAddTanuki() {
+  const addBtn = document.getElementById('addTanukiBtn');
+  const modal = document.getElementById('addTanukiModal');
+  const closeBtn = document.getElementById('closeModal');
+  const cancelBtn = document.getElementById('cancelBtn');
+  const form = document.getElementById('tanukiForm');
+  const photoInput = document.getElementById('photoInput');
+  const getCurrentLocationBtn = document.getElementById('getCurrentLocation');
+
+  // 追加ボタンクリック
+  if (addBtn) {
+    addBtn.addEventListener('click', () => {
+      openModal();
+    });
+  }
+
+  // モーダルを閉じる
+  if (closeBtn) {
+    closeBtn.addEventListener('click', closeModal);
+  }
+
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', closeModal);
+  }
+
+  // モーダル外クリックで閉じる
+  window.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      closeModal();
+    }
+  });
+
+  // 写真選択
+  if (photoInput) {
+    photoInput.addEventListener('change', handlePhotoSelect);
+  }
+
+  // 現在地取得
+  if (getCurrentLocationBtn) {
+    getCurrentLocationBtn.addEventListener('click', getCurrentLocation);
+  }
+
+  // フォーム送信
+  if (form) {
+    form.addEventListener('submit', handleSubmit);
+  }
+}
+
+// モーダルを開く
+function openModal(tanuki = null) {
+  const modal = document.getElementById('addTanukiModal');
+  const modalTitle = document.getElementById('modalTitle');
+  const form = document.getElementById('tanukiForm');
+
+  if (!modal) return;
+
+  if (tanuki) {
+    // 編集モード
+    modalTitle.textContent = 'たぬきを編集';
+    editingTanukiId = tanuki.id;
+    fillForm(tanuki);
+  } else {
+    // 新規追加モード
+    modalTitle.textContent = 'たぬきを追加';
+    editingTanukiId = null;
+    form.reset();
+
+    // photoPreview要素が存在する場合のみクリア(写真なし版では存在しない)
+    const photoPreview = document.getElementById('photoPreview');
+    if (photoPreview) {
+      photoPreview.innerHTML = '';
+    }
+    selectedPhoto = null;
+
+    // 選択済みの位置があれば設定
+    if (selectedLocation) {
+      document.getElementById('latitudeInput').value = selectedLocation.lat;
+      document.getElementById('longitudeInput').value = selectedLocation.lng;
+      document.getElementById('locationInfo').textContent =
+        `緯度: ${selectedLocation.lat.toFixed(6)}, 経度: ${selectedLocation.lng.toFixed(6)}`;
+    }
+  }
+
+  modal.style.display = 'block';
+}
+
+// モーダルを閉じる
+function closeModal() {
+  const modal = document.getElementById('addTanukiModal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+  editingTanukiId = null;
+  selectedPhoto = null;
+}
+
+// フォームに既存データを入力(編集時)
+function fillForm(tanuki) {
+  document.getElementById('episodeInput').value = tanuki.episode || '';
+  document.getElementById('characteristicsInput').value = tanuki.characteristics || '';
+  document.getElementById('noteUrlInput').value = tanuki.noteURL || '';
+
+  if (tanuki.discoveryDate) {
+    const date = tanuki.discoveryDate.toDate();
+    document.getElementById('discoveryDateInput').value = date.toISOString().split('T')[0];
+  }
+
+  if (tanuki.location) {
+    document.getElementById('latitudeInput').value = tanuki.location.latitude;
+    document.getElementById('longitudeInput').value = tanuki.location.longitude;
+    document.getElementById('locationInfo').textContent =
+      `緯度: ${tanuki.location.latitude.toFixed(6)}, 経度: ${tanuki.location.longitude.toFixed(6)}`;
+  }
+
+  // 既存写真のプレビュー
+  if (tanuki.photoURL) {
+    const preview = document.getElementById('photoPreview');
+    preview.innerHTML = `<img src="${tanuki.photoURL}" alt="現在の写真" style="max-width: 200px; border-radius: 8px;">`;
+  }
+}
+
+// 写真選択時
+function handlePhotoSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  // 画像ファイルかチェック
+  if (!file.type.startsWith('image/')) {
+    showError('画像ファイルを選択してください');
+    return;
+  }
+
+  // ファイルサイズチェック(5MB以下)
+  if (file.size > 5 * 1024 * 1024) {
+    showError('ファイルサイズは5MB以下にしてください');
+    return;
+  }
+
+  selectedPhoto = file;
+
+  // プレビュー表示
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const preview = document.getElementById('photoPreview');
+    preview.innerHTML = `<img src="${e.target.result}" alt="プレビュー" style="max-width: 200px; border-radius: 8px; margin-top: 10px;">`;
+  };
+  reader.readAsDataURL(file);
+}
+
+// 現在地を取得
+function getCurrentLocation() {
+  if (!navigator.geolocation) {
+    showError('このブラウザは位置情報に対応していません');
+    return;
+  }
+
+  showLoading('現在地を取得中...');
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+
+      document.getElementById('latitudeInput').value = lat;
+      document.getElementById('longitudeInput').value = lng;
+      document.getElementById('locationInfo').textContent =
+        `緯度: ${lat.toFixed(6)}, 経度: ${lng.toFixed(6)}`;
+
+      // 地図も移動
+      if (map) {
+        map.setView([lat, lng], DEFAULT_MAP_ZOOM);
+      }
+
+      hideLoading();
+      showSuccess('現在地を取得しました');
+    },
+    (error) => {
+      hideLoading();
+      console.error('位置情報取得エラー:', error);
+      showError('現在地の取得に失敗しました');
+    }
+  );
+}
+
+// フォーム送信
+async function handleSubmit(e) {
+  e.preventDefault();
+
+  if (!currentUser) {
+    showError('ログインしてください');
+    return;
+  }
+
+  // フォームデータ取得
+  const episode = document.getElementById('episodeInput').value.trim();
+  const characteristics = document.getElementById('characteristicsInput').value.trim();
+  const noteURL = document.getElementById('noteUrlInput').value.trim();
+  const discoveryDateStr = document.getElementById('discoveryDateInput').value;
+  const latitude = parseFloat(document.getElementById('latitudeInput').value);
+  const longitude = parseFloat(document.getElementById('longitudeInput').value);
+
+  // バリデーション
+  if (!episode) {
+    showError('エピソードを入力してください');
+    return;
+  }
+
+  if (!latitude || !longitude) {
+    showError('位置情報を設定してください(地図をクリックするか、現在地を取得)');
+    return;
+  }
+
+  // 写真なしバージョンなので、写真チェックをコメントアウト
+  // if (!editingTanukiId && !selectedPhoto) {
+  //   showError('写真を選択してください');
+  //   return;
+  // }
+
+  showLoading('保存中...');
+
+  try {
+    let tanukiData = {
+      episode,
+      characteristics,
+      noteURL: noteURL || null,
+      location: {
+        latitude,
+        longitude
+      },
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    // 発見日
+    if (discoveryDateStr) {
+      tanukiData.discoveryDate = firebase.firestore.Timestamp.fromDate(new Date(discoveryDateStr));
+    }
+
+    if (editingTanukiId) {
+      // 編集
+      await updateTanuki(editingTanukiId, tanukiData);
+    } else {
+      // 新規追加
+      tanukiData.userId = currentUser.uid;
+      tanukiData.userEmail = currentUser.email;
+      tanukiData.userName = currentUser.displayName || '名無し';
+      tanukiData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      tanukiData.status = 'active';
+      tanukiData.discoveryDate = tanukiData.discoveryDate || firebase.firestore.FieldValue.serverTimestamp();
+
+      await createTanuki(tanukiData);
+    }
+
+    hideLoading();
+    closeModal();
+    showSuccess('保存しました!');
+
+    // 地図を再読み込み
+    loadTanukis();
+
+  } catch (error) {
+    hideLoading();
+    console.error('保存エラー:', error);
+    showError('保存に失敗しました: ' + error.message);
+  }
+}
+
+// 新規作成
+async function createTanuki(tanukiData) {
+  // ドキュメント作成
+  // 写真なしバージョンなので、写真URLはnullで設定
+  tanukiData.photoURL = null;
+  tanukiData.photoThumbnailURL = null;
+
+  const docRef = await db.collection('tanukis').add(tanukiData);
+  const tanukiId = docRef.id;
+
+  // 写真アップロード機能は無効化(Storageがないため)
+  // if (selectedPhoto) {
+  //   const { photoURL, thumbnailURL } = await uploadPhoto(tanukiId, selectedPhoto);
+  //   await docRef.update({
+  //     photoURL,
+  //     photoThumbnailURL: thumbnailURL
+  //   });
+  // }
+}
+
+// 更新
+async function updateTanuki(tanukiId, tanukiData) {
+  // 写真が選択されていれば新しい写真をアップロード
+  if (selectedPhoto) {
+    const { photoURL, thumbnailURL } = await uploadPhoto(tanukiId, selectedPhoto);
+    tanukiData.photoURL = photoURL;
+    tanukiData.photoThumbnailURL = thumbnailURL;
+  }
+
+  await db.collection('tanukis').doc(tanukiId).update(tanukiData);
+}
+
+// 写真をアップロード
+async function uploadPhoto(tanukiId, file) {
+  const storageRef = storage.ref();
+
+  // フル画像(1200x1200にリサイズ)
+  const resizedImage = await resizeImage(file, 1200, 1200);
+  const imageRef = storageRef.child(`tanukis/${tanukiId}/photo.jpg`);
+  await imageRef.put(resizedImage);
+  const photoURL = await imageRef.getDownloadURL();
+
+  // サムネイル(300x300にリサイズ)
+  const thumbnail = await resizeImage(file, 300, 300);
+  const thumbRef = storageRef.child(`tanukis/${tanukiId}/thumbnail.jpg`);
+  await thumbRef.put(thumbnail);
+  const thumbnailURL = await thumbRef.getDownloadURL();
+
+  return { photoURL, thumbnailURL };
+}
