@@ -126,7 +126,7 @@ function fillForm(tanuki) {
 }
 
 // 写真選択時
-function handlePhotoSelect(e) {
+async function handlePhotoSelect(e) {
   const file = e.target.files[0];
   if (!file) return;
 
@@ -136,21 +136,34 @@ function handlePhotoSelect(e) {
     return;
   }
 
-  // ファイルサイズチェック(5MB以下)
-  if (file.size > 5 * 1024 * 1024) {
-    showError('ファイルサイズは5MB以下にしてください');
+  // ファイルサイズチェック(20MB以下)
+  if (file.size > 20 * 1024 * 1024) {
+    showError('ファイルサイズは20MB以下にしてください');
     return;
   }
 
-  selectedPhoto = file;
+  try {
+    // 大きい画像は事前に圧縮
+    if (file.size > 5 * 1024 * 1024) {
+      showLoading('画像を圧縮中...');
+      selectedPhoto = await resizeImage(file, 1200, 1200);
+      hideLoading();
+    } else {
+      selectedPhoto = file;
+    }
 
-  // プレビュー表示
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const preview = document.getElementById('photoPreview');
-    preview.innerHTML = `<img src="${e.target.result}" alt="プレビュー" style="max-width: 200px; border-radius: 8px; margin-top: 10px;">`;
-  };
-  reader.readAsDataURL(file);
+    // プレビュー表示
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const preview = document.getElementById('photoPreview');
+      preview.innerHTML = `<img src="${e.target.result}" alt="プレビュー" style="max-width: 200px; border-radius: 8px; margin-top: 10px;">`;
+    };
+    reader.readAsDataURL(selectedPhoto);
+  } catch (error) {
+    hideLoading();
+    console.error('画像処理エラー:', error);
+    showError('画像の処理に失敗しました');
+  }
 }
 
 // 現在地を取得

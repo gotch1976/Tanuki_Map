@@ -169,4 +169,31 @@ window.initializeApp = function() {
 
   // たぬき追加機能初期化
   initAddTanuki();
+
+  // 編集モードチェック（詳細ページからの遷移）
+  const editId = getUrlParameter('edit');
+  if (editId) {
+    loadTanukiForEdit(editId);
+  }
 };
+
+// 編集用にたぬきデータを読み込み
+async function loadTanukiForEdit(tanukiId) {
+  try {
+    showLoading('読み込み中...');
+    const doc = await db.collection('tanukis').doc(tanukiId).get();
+    hideLoading();
+
+    if (doc.exists) {
+      const tanuki = doc.data();
+      tanuki.id = doc.id;
+      openModal(tanuki);
+    } else {
+      showError('たぬきが見つかりません');
+    }
+  } catch (error) {
+    hideLoading();
+    console.error('編集データ読み込みエラー:', error);
+    showError('データの読み込みに失敗しました');
+  }
+}
