@@ -79,10 +79,12 @@ function createTanukiCard(tanuki) {
     ? tanuki.episode.substring(0, 100) + '...'
     : tanuki.episode;
 
-  // 写真なしバージョン
+  // サムネイル画像のURL（なければデフォルト画像）
+  const thumbnailURL = tanuki.photoThumbnailURL || tanuki.photoURL || '';
+
   card.innerHTML = `
-    <div class="card-content" style="padding: 1.5rem;">
-      <div style="font-size: 3rem; text-align: center; margin-bottom: 1rem;">🦝</div>
+    ${thumbnailURL ? `<img src="${thumbnailURL}" alt="たぬきの写真" class="card-image">` : '<div class="card-image-placeholder">🦝</div>'}
+    <div class="card-content">
       <p class="card-episode">${episodePreview}</p>
       <div class="card-meta">
         <span>📅 ${tanuki.discoveryDate ? formatDate(tanuki.discoveryDate) : '不明'}</span>

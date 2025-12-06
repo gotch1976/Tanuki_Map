@@ -216,11 +216,10 @@ async function handleSubmit(e) {
     return;
   }
 
-  // 写真なしバージョンなので、写真チェックをコメントアウト
-  // if (!editingTanukiId && !selectedPhoto) {
-  //   showError('写真を選択してください');
-  //   return;
-  // }
+  if (!editingTanukiId && !selectedPhoto) {
+    showError('写真を選択してください');
+    return;
+  }
 
   showLoading('保存中...');
 
@@ -273,21 +272,17 @@ async function handleSubmit(e) {
 // 新規作成
 async function createTanuki(tanukiData) {
   // ドキュメント作成
-  // 写真なしバージョンなので、写真URLはnullで設定
-  tanukiData.photoURL = null;
-  tanukiData.photoThumbnailURL = null;
-
   const docRef = await db.collection('tanukis').add(tanukiData);
   const tanukiId = docRef.id;
 
-  // 写真アップロード機能は無効化(Storageがないため)
-  // if (selectedPhoto) {
-  //   const { photoURL, thumbnailURL } = await uploadPhoto(tanukiId, selectedPhoto);
-  //   await docRef.update({
-  //     photoURL,
-  //     photoThumbnailURL: thumbnailURL
-  //   });
-  // }
+  // 写真アップロード
+  if (selectedPhoto) {
+    const { photoURL, thumbnailURL } = await uploadPhoto(tanukiId, selectedPhoto);
+    await docRef.update({
+      photoURL,
+      photoThumbnailURL: thumbnailURL
+    });
+  }
 }
 
 // 更新

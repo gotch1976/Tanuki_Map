@@ -3,7 +3,9 @@
     "allow": [
       "Bash(npm config:*)",
       "Bash(curl:*)",
-      "Bash(killall:*)"
+      "Bash(killall:*)",
+      "Bash(git tag:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
