@@ -37,9 +37,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // イベントリスナー設定
 function setupEventListeners() {
-  // 戻るボタン
+  // 戻るボタン（マップを再読み込みするためindex.htmlに直接遷移）
   document.getElementById('backBtn')?.addEventListener('click', () => {
-    window.history.back();
+    window.location.href = 'index.html';
   });
 
   // 編集ボタン

@@ -1,7 +1,9 @@
 // たぬき追加・編集機能
 
 let editingTanukiId = null;
+let editingTanukiData = null;
 let selectedPhoto = null;
+let initialRating = 0; // 投稿時の評価
 
 // 初期化
 function initAddTanuki() {
@@ -50,6 +52,52 @@ function initAddTanuki() {
   if (form) {
     form.addEventListener('submit', handleSubmit);
   }
+
+  // 星評価の設定
+  setupInitialStarRating();
+}
+
+// 投稿フォームの星評価を設定
+function setupInitialStarRating() {
+  const stars = document.querySelectorAll('#initialStarRating .star');
+  if (!stars.length) return;
+
+  stars.forEach(star => {
+    star.addEventListener('click', () => {
+      initialRating = parseInt(star.dataset.value);
+      document.getElementById('initialRatingInput').value = initialRating;
+      displayInitialStars(initialRating);
+    });
+
+    star.addEventListener('mouseenter', () => {
+      const value = parseInt(star.dataset.value);
+      stars.forEach((s, index) => {
+        if (index < value) {
+          s.classList.add('hover');
+        } else {
+          s.classList.remove('hover');
+        }
+      });
+    });
+
+    star.addEventListener('mouseleave', () => {
+      stars.forEach(s => s.classList.remove('hover'));
+    });
+  });
+}
+
+// 投稿フォームの星を表示
+function displayInitialStars(rating) {
+  const stars = document.querySelectorAll('#initialStarRating .star');
+  stars.forEach((star, index) => {
+    if (index < rating) {
+      star.textContent = '★';
+      star.classList.add('active');
+    } else {
+      star.textContent = '☆';
+      star.classList.remove('active');
+    }
+  });
 }
 
 // モーダルを開く
@@ -60,15 +108,40 @@ function openModal(tanuki = null) {
 
   if (!modal) return;
 
+  // 投稿者名入力欄
+  const userNameInput = document.getElementById('userNameInput');
+
+  // 評価UI
+  const ratingGroup = document.getElementById('initialRatingGroup');
+
   if (tanuki) {
     // 編集モード
     modalTitle.textContent = 'たぬきを編集';
     editingTanukiId = tanuki.id;
+    editingTanukiData = tanuki; // 編集中のたぬきデータを保存
     fillForm(tanuki);
+
+    // 投稿者本人の場合のみ投稿者名を編集可能
+    if (userNameInput) {
+      if (currentUser && tanuki.userId === currentUser.uid) {
+        userNameInput.disabled = false;
+        userNameInput.value = tanuki.userName || '';
+      } else {
+        // 管理者が編集する場合は投稿者名を変更不可
+        userNameInput.disabled = true;
+        userNameInput.value = tanuki.userName || '';
+      }
+    }
+
+    // 編集時は評価UIを非表示（評価は詳細ページで変更）
+    if (ratingGroup) {
+      ratingGroup.style.display = 'none';
+    }
   } else {
     // 新規追加モード
     modalTitle.textContent = 'たぬきを追加';
     editingTanukiId = null;
+    editingTanukiData = null;
     form.reset();
 
     // photoPreview要素が存在する場合のみクリア(写真なし版では存在しない)
@@ -77,6 +150,20 @@ function openModal(tanuki = null) {
       photoPreview.innerHTML = '';
     }
     selectedPhoto = null;
+
+    // 新規投稿時はGoogleアカウント名をデフォルトに設定
+    if (userNameInput && currentUser) {
+      userNameInput.disabled = false;
+      userNameInput.value = currentUser.displayName || '';
+    }
+
+    // 評価をリセットして表示
+    initialRating = 0;
+    if (ratingGroup) {
+      ratingGroup.style.display = 'block';
+      document.getElementById('initialRatingInput').value = 0;
+      displayInitialStars(0);
+    }
 
     // 選択済みの位置があれば設定
     if (selectedLocation) {
@@ -259,16 +346,20 @@ async function handleSubmit(e) {
       tanukiData.discoveryDate = firebase.firestore.Timestamp.fromDate(new Date(discoveryDateStr));
     }
 
-    // 匿名設定
-    const isAnonymous = document.getElementById('anonymousCheckbox').checked;
-    tanukiData.isAnonymous = isAnonymous;
-    tanukiData.userName = isAnonymous ? '匿名' : (currentUser.displayName || '名無し');
+    // 投稿者名の取得
+    const userNameInput = document.getElementById('userNameInput');
+    const inputUserName = userNameInput ? userNameInput.value.trim() : '';
 
     if (editingTanukiId) {
-      // 編集
+      // 編集時: 投稿者本人の場合のみuserNameを更新可能
+      if (currentUser && editingTanukiData && editingTanukiData.userId === currentUser.uid) {
+        tanukiData.userName = inputUserName || '匿名';
+      }
+      // 管理者が編集する場合はuserNameを更新しない（元の値を保持）
       await updateTanuki(editingTanukiId, tanukiData);
     } else {
-      // 新規追加
+      // 新規作成時
+      tanukiData.userName = inputUserName || '匿名';
       tanukiData.userId = currentUser.uid;
       tanukiData.userEmail = currentUser.email;
       tanukiData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
@@ -305,6 +396,16 @@ async function createTanuki(tanukiData) {
       photoURL,
       photoThumbnailURL: thumbnailURL
     });
+  }
+
+  // 投稿者の評価を保存（評価が設定されている場合のみ）
+  if (initialRating > 0 && currentUser) {
+    await db.collection('tanukis').doc(tanukiId)
+      .collection('ratings').doc(currentUser.uid).set({
+        userId: currentUser.uid,
+        rating: initialRating,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
   }
 }
 

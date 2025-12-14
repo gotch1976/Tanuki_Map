@@ -267,6 +267,47 @@ form {
   border: 1px solid #ffeeba;
 }
 
+/* リロードボタン */
+.reload-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: transform 0.3s;
+}
+
+.reload-btn:hover {
+  transform: rotate(180deg);
+}
+
+.reload-btn:active {
+  transform: rotate(360deg);
+}
+
+/* 星評価（投稿フォーム用） */
+.star-rating {
+  font-size: 2rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.star-rating .star {
+  color: #ddd;
+  transition: color 0.2s;
+  padding: 0 2px;
+}
+
+.star-rating .star:hover,
+.star-rating .star.hover {
+  color: #ffc107;
+}
+
+.star-rating .star.active {
+  color: #ffc107;
+}
+
 /* レスポンシブ */
 @media (max-width: 768px) {
   header h1 {

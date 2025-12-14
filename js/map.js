@@ -176,6 +176,15 @@ function initMap() {
     });
   }
 
+  // リロードボタン
+  const reloadBtn = document.getElementById('reloadBtn');
+  if (reloadBtn) {
+    reloadBtn.addEventListener('click', () => {
+      loadTanukis();
+      showSuccess('マップを更新しました');
+    });
+  }
+
   // たぬきを読み込み
   loadTanukis();
 }

@@ -17,7 +17,10 @@
   <!-- ヘッダー -->
   <header>
     <div class="header-container">
-      <h1>🦝 たぬきマップ</h1>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <h1>🦝 たぬきマップ</h1>
+        <button id="reloadBtn" class="reload-btn" title="マップを更新">🔄</button>
+      </div>
       <div class="header-actions">
         <div id="userInfo" style="display: none;">
           <img id="userPhoto" alt="User" class="user-photo">
@@ -83,11 +86,22 @@
         <input type="hidden" id="tanukiId">
 
         <div class="form-group">
-          <label style="display: flex; align-items: center; cursor: pointer;">
-            <input type="checkbox" id="anonymousCheckbox" style="margin-right: 8px; width: auto;">
-            🙈 匿名で投稿する
-          </label>
-          <small>チェックすると投稿者名が「匿名」と表示されます</small>
+          <label for="userNameInput">👤 投稿者名</label>
+          <input type="text" id="userNameInput" placeholder="表示する名前を入力（空欄で匿名）">
+          <small>空欄の場合は「匿名」と表示されます</small>
+        </div>
+
+        <div class="form-group" id="initialRatingGroup">
+          <label>⭐ 評価（任意）</label>
+          <p style="font-size: 0.9em; color: #666; margin-bottom: 8px;">このたぬきの評価を設定できます</p>
+          <div class="star-rating" id="initialStarRating">
+            <span class="star" data-value="1">☆</span>
+            <span class="star" data-value="2">☆</span>
+            <span class="star" data-value="3">☆</span>
+            <span class="star" data-value="4">☆</span>
+            <span class="star" data-value="5">☆</span>
+          </div>
+          <input type="hidden" id="initialRatingInput" value="0">
         </div>
 
         <div class="form-actions">
