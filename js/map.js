@@ -2,7 +2,10 @@
 
 let map;
 let markers = [];
+let currentInfoWindow = null;
 let selectedLocation = null;
+let tempMarker = null; // 仮マーカー
+let longPressTimer = null; // 長押し用タイマー
 
 // 地図の初期化
 function initMap() {
@@ -59,16 +62,111 @@ function initMap() {
     );
   }
 
-  // 地図クリックでたぬき追加位置を設定
-  map.addListener('click', (e) => {
-    if (currentUser) {
-      selectedLocation = {
-        lat: e.latLng.lat(),
-        lng: e.latLng.lng()
-      };
-      console.log('選択した位置:', selectedLocation);
+  // 位置選択時の共通処理
+  function handleLocationSelect(lat, lng) {
+    if (!currentUser) return;
+
+    selectedLocation = { lat, lng };
+    console.log('選択した位置:', selectedLocation);
+
+    // 既存の仮マーカーを削除
+    if (tempMarker) {
+      tempMarker.setMap(null);
     }
-  });
+
+    // 仮マーカーを表示（茶色のピン型）
+    tempMarker = new google.maps.Marker({
+      position: { lat, lng },
+      map: map,
+      icon: {
+        path: 'M 0,0 C -2,-20 -10,-22 -10,-30 A 10,10 0 1,1 10,-30 C 10,-22 2,-20 0,0 z',
+        fillColor: '#8B4513',
+        fillOpacity: 1,
+        strokeColor: '#5D2E0C',
+        strokeWeight: 2,
+        scale: 1.2,
+        anchor: new google.maps.Point(0, 0)
+      },
+      animation: google.maps.Animation.DROP
+    });
+
+    // ポップアップで確認
+    const infoWindow = new google.maps.InfoWindow({
+      content: `
+        <div style="text-align: center; padding: 5px;">
+          <p style="margin: 0 0 10px 0;">📍 ここにたぬきを追加しますか？</p>
+          <button onclick="openModal()" style="
+            background-color: #8B4513;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+          ">追加する</button>
+        </div>
+      `
+    });
+    infoWindow.open(map, tempMarker);
+  }
+
+  // タッチデバイス判定
+  const hasTouchScreen = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+  const mapDiv = document.getElementById('map');
+
+  if (hasTouchScreen) {
+    // モバイル: 長押しで位置選択（clickイベントは使わない）
+    let touchStartX = null;
+    let touchStartY = null;
+
+    mapDiv.addEventListener('touchstart', (e) => {
+      if (!currentUser) return;
+
+      const touch = e.touches[0];
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+
+      longPressTimer = setTimeout(() => {
+        if (touchStartX === null || touchStartY === null) return;
+
+        const rect = mapDiv.getBoundingClientRect();
+        const x = touchStartX - rect.left;
+        const y = touchStartY - rect.top;
+
+        const bounds = map.getBounds();
+        if (!bounds) return;
+
+        const ne = bounds.getNorthEast();
+        const sw = bounds.getSouthWest();
+        const lat = ne.lat() - (y / rect.height) * (ne.lat() - sw.lat());
+        const lng = sw.lng() + (x / rect.width) * (ne.lng() - sw.lng());
+
+        handleLocationSelect(lat, lng);
+      }, 500);
+    }, { passive: true });
+
+    mapDiv.addEventListener('touchend', () => {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+      touchStartX = null;
+      touchStartY = null;
+    }, { passive: true });
+
+    mapDiv.addEventListener('touchmove', () => {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+    }, { passive: true });
+
+  } else {
+    // PC: クリックで位置選択
+    map.addListener('click', (e) => {
+      handleLocationSelect(e.latLng.lat(), e.latLng.lng());
+    });
+  }
 
   // リストビューボタン
   const listViewBtn = document.getElementById('listViewBtn');
@@ -112,41 +210,83 @@ async function loadTanukis() {
   }
 }
 
-// マーカーを地図に追加
+// マーカーを地図に追加（N+1クエリ修正版：評価はクリック時に遅延読み込み）
 function addMarker(tanuki) {
   if (!tanuki.location) return;
 
   const { latitude, longitude } = tanuki.location;
 
-  // カスタムアイコン(たぬき)
+  // カスタムアイコン(信楽焼の狸)
   const marker = new google.maps.Marker({
     position: { lat: latitude, lng: longitude },
     map: map,
     icon: {
-      url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
+      url: 'img/tanuki-marker.png',
+      scaledSize: new google.maps.Size(32, 32),
+      anchor: new google.maps.Point(16, 32)
     }
   });
 
-  // ポップアップの内容(写真なしバージョン)
-  const popupContent = `
+  // 初期ポップアップ（評価は後で読み込み）
+  const infoWindow = new google.maps.InfoWindow({
+    content: createPopupContent(tanuki, '読み込み中...', 0),
+    maxWidth: 300
+  });
+
+  // 評価キャッシュ
+  let ratingLoaded = false;
+
+  marker.addListener('click', async () => {
+    if (currentInfoWindow) {
+      currentInfoWindow.close();
+    }
+    infoWindow.open(map, marker);
+    currentInfoWindow = infoWindow;
+
+    // 評価を遅延読み込み（1回だけ）
+    if (!ratingLoaded) {
+      try {
+        const ratingsSnapshot = await db.collection('tanukis')
+          .doc(tanuki.id).collection('ratings').get();
+
+        let avgRating = '-';
+        let ratingCount = 0;
+
+        if (ratingsSnapshot.size > 0) {
+          let total = 0;
+          ratingsSnapshot.forEach(doc => total += doc.data().rating);
+          avgRating = (total / ratingsSnapshot.size).toFixed(1);
+          ratingCount = ratingsSnapshot.size;
+        }
+
+        // ポップアップ内容を更新
+        infoWindow.setContent(createPopupContent(tanuki, avgRating, ratingCount));
+        ratingLoaded = true;
+      } catch (e) {
+        console.log('評価取得エラー:', e);
+        infoWindow.setContent(createPopupContent(tanuki, '-', 0));
+      }
+    }
+  });
+
+  markers.push(marker);
+}
+
+// ポップアップのHTML生成
+function createPopupContent(tanuki, avgRating, ratingCount) {
+  const ratingText = avgRating === '読み込み中...'
+    ? '⭐ 読み込み中...'
+    : (avgRating !== '-' ? `⭐ ${avgRating} (${ratingCount}件)` : '⭐ 未評価');
+
+  return `
     <div class="tanuki-popup">
       <h3>🦝 ${tanuki.episode.substring(0, 50)}${tanuki.episode.length > 50 ? '...' : ''}</h3>
+      <p><strong>評価:</strong> ${ratingText}</p>
       <p><strong>投稿者:</strong> ${tanuki.userName}</p>
       <p><strong>発見日:</strong> ${tanuki.discoveryDate ? formatDate(tanuki.discoveryDate) : '不明'}</p>
       <a href="detail.html?id=${tanuki.id}" class="btn-primary" style="display: inline-block; margin-top: 10px;">詳細を見る</a>
     </div>
   `;
-
-  const infoWindow = new google.maps.InfoWindow({
-    content: popupContent,
-    maxWidth: 300
-  });
-
-  marker.addListener('click', () => {
-    infoWindow.open(map, marker);
-  });
-
-  markers.push(marker);
 }
 
 // Google Maps APIのコールバック関数（グローバルに定義）

@@ -6,8 +6,8 @@
   <title>たぬきマップ | Tanuki Map</title>
 
   <!-- カスタムCSS -->
-  <link rel="stylesheet" href="css/main.css?v=6">
-  <link rel="stylesheet" href="css/map.css?v=6">
+  <link rel="stylesheet" href="css/main.css?v=7">
+  <link rel="stylesheet" href="css/map.css?v=7">
 
   <!-- PWA設定 -->
   <link rel="manifest" href="manifest.json">
@@ -47,7 +47,7 @@
       <form id="tanukiForm">
         <div class="form-group">
           <label for="photoInput">📸 写真 *</label>
-          <input type="file" id="photoInput" accept="image/*" required>
+          <input type="file" id="photoInput" accept="image/*">
           <div id="photoPreview"></div>
         </div>
 
@@ -82,6 +82,14 @@
         <input type="hidden" id="longitudeInput">
         <input type="hidden" id="tanukiId">
 
+        <div class="form-group">
+          <label style="display: flex; align-items: center; cursor: pointer;">
+            <input type="checkbox" id="anonymousCheckbox" style="margin-right: 8px; width: auto;">
+            🙈 匿名で投稿する
+          </label>
+          <small>チェックすると投稿者名が「匿名」と表示されます</small>
+        </div>
+
         <div class="form-actions">
           <button type="button" class="btn-secondary" id="cancelBtn">キャンセル</button>
           <button type="submit" class="btn-primary" id="submitBtn">保存</button>
@@ -102,12 +110,12 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 
   <!-- アプリのJavaScript (Google Maps APIより先に読み込む) -->
-  <script src="js/config.js?v=6"></script>
-  <script src="js/utils.js?v=6"></script>
-  <script src="js/firebase-init.js?v=6"></script>
-  <script src="js/auth.js?v=6"></script>
-  <script src="js/add-tanuki.js?v=6"></script>
-  <script src="js/map.js?v=6"></script>
+  <script src="js/config.js?v=7"></script>
+  <script src="js/utils.js?v=7"></script>
+  <script src="js/firebase-init.js?v=7"></script>
+  <script src="js/auth.js?v=7"></script>
+  <script src="js/add-tanuki.js?v=7"></script>
+  <script src="js/map.js?v=7"></script>
 
   <!-- Google Maps JavaScript API (コールバック関数が定義された後に読み込む) -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA_djMpDkNHMKX7CPsK81m8TSVB42gC6gw&callback=initializeApp"></script>

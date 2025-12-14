@@ -8,13 +8,17 @@
   bottom: 0;
   z-index: 1;
   height: calc(100vh - 70px);
+  /* iOS長押しメニューを無効化 */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 /* フローティングアクションボタン(FAB) */
 .fab {
   position: fixed;
   bottom: 2rem;
-  right: 2rem;
+  left: 2rem;
   width: 60px;
   height: 60px;
   border-radius: 50%;
@@ -96,6 +100,6 @@
     height: 50px;
     font-size: 1.5rem;
     bottom: 1rem;
-    right: 1rem;
+    left: 1rem;
   }
 }

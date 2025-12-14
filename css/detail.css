@@ -4,6 +4,7 @@
   max-width: 800px;
   margin: 0 auto;
   padding: 2rem 1rem;
+  padding-top: calc(70px + 2rem); /* ヘッダー分のスペースを確保 */
 }
 
 .detail-content {
@@ -104,4 +105,73 @@
   .action-buttons button {
     width: 100%;
   }
+}
+
+/* 星評価 */
+#ratingSection {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #dee2e6;
+}
+
+.rating-display {
+  font-size: 1.2rem;
+  color: #8B4513;
+  margin-bottom: 1rem;
+}
+
+.rating-prompt {
+  margin: 0.5rem 0;
+  color: #666;
+}
+
+.star-rating {
+  font-size: 2rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.star-rating .star {
+  color: #ddd;
+  transition: color 0.2s;
+  padding: 0 2px;
+}
+
+.star-rating .star:hover,
+.star-rating .star.hover {
+  color: #ffc107;
+}
+
+.star-rating .star.active {
+  color: #ffc107;
+}
+
+.star-rating.disabled {
+  cursor: default;
+}
+
+.star-rating.disabled .star:hover {
+  color: #ddd;
+}
+
+.star-rating.disabled .star.active {
+  color: #ffc107;
+}
+
+#ratingActions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+#ratingActions button {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+
+#ratingMessage {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: #28a745;
 }

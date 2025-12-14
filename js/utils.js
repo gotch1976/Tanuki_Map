@@ -17,14 +17,40 @@ function hideLoading() {
   }
 }
 
+// トースト通知を表示
+function showToast(message, type = 'info', duration = 4000) {
+  // トーストコンテナを取得または作成
+  let container = document.getElementById('toastContainer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toastContainer';
+    document.body.appendChild(container);
+  }
+
+  // トースト要素を作成
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.textContent = message;
+  container.appendChild(toast);
+
+  // アニメーション用に少し遅延
+  setTimeout(() => toast.classList.add('show'), 10);
+
+  // 自動で消去
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
+}
+
 // 成功メッセージ表示
 function showSuccess(message) {
-  alert('✅ ' + message);
+  showToast('✅ ' + message, 'success');
 }
 
 // エラーメッセージ表示
 function showError(message) {
-  alert('❌ ' + message);
+  showToast('❌ ' + message, 'error', 5000);
 }
 
 // 日付をフォーマット

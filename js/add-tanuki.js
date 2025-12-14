@@ -123,6 +123,12 @@ function fillForm(tanuki) {
     const preview = document.getElementById('photoPreview');
     preview.innerHTML = `<img src="${tanuki.photoURL}" alt="現在の写真" style="max-width: 200px; border-radius: 8px;">`;
   }
+
+  // 匿名設定
+  const anonymousCheckbox = document.getElementById('anonymousCheckbox');
+  if (anonymousCheckbox) {
+    anonymousCheckbox.checked = tanuki.isAnonymous || false;
+  }
 }
 
 // 写真選択時
@@ -253,6 +259,11 @@ async function handleSubmit(e) {
       tanukiData.discoveryDate = firebase.firestore.Timestamp.fromDate(new Date(discoveryDateStr));
     }
 
+    // 匿名設定
+    const isAnonymous = document.getElementById('anonymousCheckbox').checked;
+    tanukiData.isAnonymous = isAnonymous;
+    tanukiData.userName = isAnonymous ? '匿名' : (currentUser.displayName || '名無し');
+
     if (editingTanukiId) {
       // 編集
       await updateTanuki(editingTanukiId, tanukiData);
@@ -260,7 +271,6 @@ async function handleSubmit(e) {
       // 新規追加
       tanukiData.userId = currentUser.uid;
       tanukiData.userEmail = currentUser.email;
-      tanukiData.userName = currentUser.displayName || '名無し';
       tanukiData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
       tanukiData.status = 'active';
       tanukiData.discoveryDate = tanukiData.discoveryDate || firebase.firestore.FieldValue.serverTimestamp();
