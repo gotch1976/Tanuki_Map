@@ -33,8 +33,16 @@ function initMap() {
     return;
   }
 
-  // 現在地を取得
-  if (navigator.geolocation) {
+  // URLパラメータから座標を取得（詳細ページから戻った場合）
+  const urlLat = parseFloat(getUrlParameter('lat'));
+  const urlLng = parseFloat(getUrlParameter('lng'));
+
+  if (!isNaN(urlLat) && !isNaN(urlLng)) {
+    // URLパラメータがある場合はその位置にセンタリング
+    map.setCenter({ lat: urlLat, lng: urlLng });
+    map.setZoom(DEFAULT_MAP_ZOOM);
+  } else if (navigator.geolocation) {
+    // URLパラメータがない場合は現在地を取得
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const lat = position.coords.latitude;

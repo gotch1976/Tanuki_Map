@@ -37,9 +37,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // イベントリスナー設定
 function setupEventListeners() {
-  // 戻るボタン（マップを再読み込みするためindex.htmlに直接遷移）
+  // 戻るボタン（マップを再読み込みするためindex.htmlに直接遷移、たぬきの位置を保持）
   document.getElementById('backBtn')?.addEventListener('click', () => {
-    window.location.href = 'index.html';
+    if (currentTanuki && currentTanuki.location) {
+      const { latitude, longitude } = currentTanuki.location;
+      window.location.href = `index.html?lat=${latitude}&lng=${longitude}`;
+    } else {
+      window.location.href = 'index.html';
+    }
   });
 
   // 編集ボタン
