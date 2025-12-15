@@ -176,3 +176,134 @@
   font-size: 0.9rem;
   color: #28a745;
 }
+
+/* コメントセクション */
+#commentSection {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #dee2e6;
+}
+
+#commentSection h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+#commentCount {
+  font-size: 0.9rem;
+  font-weight: normal;
+  color: #666;
+}
+
+.comments-list {
+  margin-top: 1rem;
+}
+
+.no-comments {
+  color: #999;
+  font-style: italic;
+}
+
+.comment-item {
+  background-color: #f9f9f9;
+  border-left: 4px solid #8B4513;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 0 4px 4px 0;
+}
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.comment-user {
+  font-weight: 600;
+  color: #495057;
+}
+
+.comment-date {
+  font-size: 0.85rem;
+  color: #999;
+}
+
+.comment-text {
+  color: #333;
+  line-height: 1.6;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.comment-actions {
+  margin-top: 0.5rem;
+  text-align: right;
+}
+
+.comment-delete-btn {
+  background: none;
+  border: none;
+  color: #dc3545;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+}
+
+.comment-delete-btn:hover {
+  text-decoration: underline;
+}
+
+/* コメントフォーム */
+#userCommentArea {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px dashed #dee2e6;
+}
+
+#commentForm .form-group {
+  margin-bottom: 1rem;
+}
+
+#commentForm label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #495057;
+}
+
+#commentText {
+  width: 100%;
+  min-height: 80px;
+  padding: 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 1rem;
+  resize: vertical;
+  font-family: inherit;
+}
+
+#commentText:focus {
+  outline: none;
+  border-color: #8B4513;
+  box-shadow: 0 0 0 2px rgba(139, 69, 19, 0.2);
+}
+
+#charCount {
+  display: block;
+  text-align: right;
+  color: #666;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+.login-prompt {
+  color: #666;
+  margin-top: 1rem;
+}
+
+.login-prompt a {
+  color: #8B4513;
+  font-weight: 600;
+}

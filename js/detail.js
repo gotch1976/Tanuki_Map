@@ -170,8 +170,10 @@ function updateActionButtons(tanuki) {
       if (deleteBtn) deleteBtn.style.display = 'none';
     }
 
-    // 認証状態が確定してから評価を読み込み
+    // 認証状態が確定してから評価とコメントを読み込み
     await loadRatings(tanuki.id);
+    await loadComments(tanuki.id);
+    updateCommentUI();
   });
 }
 
@@ -422,6 +424,162 @@ async function updateRating(tanukiId, rating) {
     showError('評価の更新に失敗しました');
   }
 }
+
+// ========== コメント機能 ==========
+
+// コメントを読み込み
+async function loadComments(tanukiId) {
+  try {
+    const commentsSnapshot = await db.collection('tanukis')
+      .doc(tanukiId).collection('comments')
+      .orderBy('createdAt', 'desc')
+      .get();
+
+    const comments = [];
+    commentsSnapshot.forEach(doc => {
+      comments.push({ id: doc.id, ...doc.data() });
+    });
+
+    displayComments(comments);
+  } catch (error) {
+    console.error('コメント読み込みエラー:', error);
+  }
+}
+
+// コメントを表示
+function displayComments(comments) {
+  const commentsList = document.getElementById('commentsList');
+  const commentCount = document.getElementById('commentCount');
+
+  commentCount.textContent = `(${comments.length}件)`;
+
+  if (comments.length === 0) {
+    commentsList.innerHTML = '<p class="no-comments">コメントはまだありません</p>';
+    return;
+  }
+
+  commentsList.innerHTML = comments.map(comment => {
+    const canDelete = currentUser && (currentUser.uid === comment.userId || isCurrentUserAdmin());
+    const dateStr = comment.createdAt ? formatDate(comment.createdAt) : '';
+
+    return `
+      <div class="comment-item" data-comment-id="${comment.id}">
+        <div class="comment-header">
+          <span class="comment-user">${escapeHtml(comment.userName)}</span>
+          <span class="comment-date">${dateStr}</span>
+        </div>
+        <div class="comment-text">${escapeHtml(comment.text)}</div>
+        ${canDelete ? `
+          <div class="comment-actions">
+            <button class="comment-delete-btn" onclick="deleteComment('${comment.id}')">削除</button>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+// HTMLエスケープ
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// コメントUIを更新（ログイン状態に応じて表示切り替え）
+function updateCommentUI() {
+  const userCommentArea = document.getElementById('userCommentArea');
+  const loginPrompt = document.getElementById('loginPrompt');
+  const commentText = document.getElementById('commentText');
+  const charCount = document.getElementById('charCount');
+
+  if (currentUser) {
+    userCommentArea.style.display = 'block';
+    loginPrompt.style.display = 'none';
+
+    // 文字数カウンター
+    commentText.addEventListener('input', () => {
+      charCount.textContent = `${commentText.value.length}/500文字`;
+    });
+
+    // フォーム送信
+    const commentForm = document.getElementById('commentForm');
+    commentForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await submitComment();
+    });
+  } else {
+    userCommentArea.style.display = 'none';
+    loginPrompt.style.display = 'block';
+
+    // ログインリンク
+    document.getElementById('loginForComment')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      signInWithGoogle();
+    });
+  }
+}
+
+// コメントを送信
+async function submitComment() {
+  if (!currentUser || !currentTanuki) return;
+
+  const commentText = document.getElementById('commentText');
+  const text = commentText.value.trim();
+
+  if (!text) {
+    showError('コメントを入力してください');
+    return;
+  }
+
+  if (text.length > 500) {
+    showError('コメントは500文字以内で入力してください');
+    return;
+  }
+
+  try {
+    await db.collection('tanukis').doc(currentTanuki.id)
+      .collection('comments').add({
+        userId: currentUser.uid,
+        userName: currentUser.displayName || '匿名',
+        text: text,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+    commentText.value = '';
+    document.getElementById('charCount').textContent = '0/500文字';
+    showSuccess('コメントを投稿しました');
+
+    // コメント再読み込み
+    await loadComments(currentTanuki.id);
+  } catch (error) {
+    console.error('コメント送信エラー:', error);
+    showError('コメントの投稿に失敗しました');
+  }
+}
+
+// コメントを削除
+async function deleteComment(commentId) {
+  if (!currentUser || !currentTanuki) return;
+
+  const confirmed = confirm('このコメントを削除しますか？');
+  if (!confirmed) return;
+
+  try {
+    await db.collection('tanukis').doc(currentTanuki.id)
+      .collection('comments').doc(commentId).delete();
+
+    showSuccess('コメントを削除しました');
+
+    // コメント再読み込み
+    await loadComments(currentTanuki.id);
+  } catch (error) {
+    console.error('コメント削除エラー:', error);
+    showError('コメントの削除に失敗しました');
+  }
+}
+
+// ========== たぬき削除 ==========
 
 // たぬきを削除
 async function deleteTanuki() {

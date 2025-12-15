@@ -50,6 +50,23 @@ service cloud.firestore {
         // 削除は管理者のみ
         allow delete: if request.auth != null && isAdmin();
       }
+
+      // コメントサブコレクション
+      match /comments/{commentId} {
+        // 誰でも閲覧可能
+        allow read: if true;
+
+        // ログインユーザーのみ作成可能
+        allow create: if request.auth != null
+                      && request.resource.data.userId == request.auth.uid
+                      && request.resource.data.text is string
+                      && request.resource.data.text.size() > 0
+                      && request.resource.data.text.size() <= 500;
+
+        // 投稿者本人または管理者のみ削除可能
+        allow delete: if request.auth != null
+                      && (resource.data.userId == request.auth.uid || isAdmin());
+      }
     }
 
     // 設定コレクション(管理者リスト)

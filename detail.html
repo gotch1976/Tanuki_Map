@@ -7,7 +7,7 @@
 
   <!-- カスタムCSS -->
   <link rel="stylesheet" href="css/main.css?v=8">
-  <link rel="stylesheet" href="css/detail.css?v=8">
+  <link rel="stylesheet" href="css/detail.css?v=9">
 </head>
 <body>
   <!-- ヘッダー -->
@@ -77,6 +77,25 @@
           <a id="noteLink" href="#" target="_blank" rel="noopener noreferrer" class="btn-primary">note記事を読む</a>
         </div>
 
+        <!-- コメントセクション -->
+        <div id="commentSection">
+          <h3>💬 コメント <span id="commentCount">(0件)</span></h3>
+          <div id="commentsList" class="comments-list">
+            <p class="no-comments">コメントはまだありません</p>
+          </div>
+          <div id="userCommentArea" style="display: none;">
+            <form id="commentForm">
+              <div class="form-group">
+                <label for="commentText">コメントを投稿</label>
+                <textarea id="commentText" placeholder="このたぬきについてコメントを残してください" maxlength="500" required></textarea>
+                <small id="charCount">0/500文字</small>
+              </div>
+              <button type="submit" class="btn-primary">コメントを投稿</button>
+            </form>
+          </div>
+          <p id="loginPrompt" class="login-prompt" style="display: none;">コメントするには<a href="#" id="loginForComment">ログイン</a>してください</p>
+        </div>
+
         <!-- アクションボタン -->
         <div class="action-buttons">
           <button id="editBtn" class="btn-secondary" style="display: none;">編集</button>
@@ -102,7 +121,7 @@
   <script src="js/utils.js?v=7"></script>
   <script src="js/firebase-init.js?v=7"></script>
   <script src="js/auth.js?v=7"></script>
-  <script src="js/detail.js?v=8"></script>
+  <script src="js/detail.js?v=9"></script>
 
   <!-- Google Maps JavaScript API -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA_djMpDkNHMKX7CPsK81m8TSVB42gC6gw"></script>
