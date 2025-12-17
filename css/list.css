@@ -4,6 +4,7 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem 1rem;
+  padding-top: calc(70px + 2rem);
 }
 
 .list-header {
@@ -12,9 +13,44 @@
   border-bottom: 2px solid #8B4513;
 }
 
+.list-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
 .list-header p {
   font-size: 1.1rem;
   color: #666;
+  margin: 0;
+}
+
+/* ソートコントロール */
+.sort-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sort-controls label {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.sort-controls select {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  background-color: white;
+  cursor: pointer;
+}
+
+.sort-controls select:focus {
+  outline: none;
+  border-color: #8B4513;
 }
 
 /* たぬきグリッド */
@@ -97,6 +133,20 @@
 @media (max-width: 768px) {
   .list-container {
     padding: 1rem;
+    padding-top: calc(60px + 1rem);
+  }
+
+  .list-header-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .sort-controls {
+    width: 100%;
+  }
+
+  .sort-controls select {
+    flex: 1;
   }
 
   .tanuki-grid {

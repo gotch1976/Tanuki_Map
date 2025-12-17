@@ -6,8 +6,8 @@
   <title>たぬきリスト | Tanuki Map</title>
 
   <!-- カスタムCSS -->
-  <link rel="stylesheet" href="css/main.css?v=6">
-  <link rel="stylesheet" href="css/list.css?v=6">
+  <link rel="stylesheet" href="css/main.css?v=10">
+  <link rel="stylesheet" href="css/list.css?v=10">
 </head>
 <body>
   <!-- ヘッダー -->
@@ -25,7 +25,17 @@
   <!-- リストコンテナ -->
   <div class="list-container">
     <div class="list-header">
-      <p id="tanukiCount">読み込み中...</p>
+      <div class="list-header-top">
+        <p id="tanukiCount">読み込み中...</p>
+        <div class="sort-controls">
+          <label for="sortSelect">並び替え:</label>
+          <select id="sortSelect">
+            <option value="date">日付順（新しい順）</option>
+            <option value="prefecture">都道府県別</option>
+            <option value="rating">評価順</option>
+          </select>
+        </div>
+      </div>
     </div>
     <div id="tanukiList" class="tanuki-grid">
       <!-- たぬきカードがここに表示されます -->
@@ -44,10 +54,10 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 
   <!-- アプリのJavaScript -->
-  <script src="js/config.js?v=6"></script>
-  <script src="js/utils.js?v=6"></script>
-  <script src="js/firebase-init.js?v=6"></script>
-  <script src="js/auth.js?v=6"></script>
-  <script src="js/list.js?v=6"></script>
+  <script src="js/config.js?v=10"></script>
+  <script src="js/utils.js?v=10"></script>
+  <script src="js/firebase-init.js?v=10"></script>
+  <script src="js/auth.js?v=10"></script>
+  <script src="js/list.js?v=10"></script>
 </body>
 </html>

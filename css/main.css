@@ -308,6 +308,76 @@ form {
   color: #ffc107;
 }
 
+/* 新規たぬき通知バナー */
+.new-tanuki-notification {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  padding: 1rem;
+  z-index: 1500;
+  max-width: 90%;
+  width: 360px;
+  border-left: 4px solid #8B4513;
+}
+
+.notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #8B4513;
+}
+
+.notification-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #666;
+  line-height: 1;
+  padding: 0;
+}
+
+.notification-close:hover {
+  color: #333;
+}
+
+.notification-content {
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.notification-counter {
+  color: #666;
+  margin-right: 0.5rem;
+}
+
+.notification-episode {
+  color: #495057;
+}
+
+.notification-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.notification-btn {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+}
+
+.notification-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* レスポンシブ */
 @media (max-width: 768px) {
   header h1 {
@@ -329,5 +399,19 @@ form {
   .modal-content {
     margin: 1rem auto;
     width: 95%;
+  }
+
+  .new-tanuki-notification {
+    top: 75px;
+    width: 95%;
+    padding: 0.75rem;
+  }
+
+  .notification-header {
+    font-size: 0.9rem;
+  }
+
+  .notification-content {
+    font-size: 0.85rem;
   }
 }

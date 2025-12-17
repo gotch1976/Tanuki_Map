@@ -390,6 +390,15 @@ async function handleSubmit(e) {
 
 // 新規作成
 async function createTanuki(tanukiData) {
+  // 都道府県を取得（エラーでも投稿は続行）
+  const prefecture = await getPrefecture(
+    tanukiData.location.latitude,
+    tanukiData.location.longitude
+  );
+  if (prefecture) {
+    tanukiData.prefecture = prefecture;
+  }
+
   // ドキュメント作成
   const docRef = await db.collection('tanukis').add(tanukiData);
   const tanukiId = docRef.id;
@@ -443,4 +452,37 @@ async function uploadPhoto(tanukiId, file) {
   const thumbnailURL = await thumbRef.getDownloadURL();
 
   return { photoURL, thumbnailURL };
+}
+
+// 緯度経度から都道府県を取得（逆ジオコーディング）
+async function getPrefecture(lat, lng) {
+  try {
+    const geocoder = new google.maps.Geocoder();
+    const result = await geocoder.geocode({ location: { lat, lng } });
+
+    if (result.results && result.results.length > 0) {
+      // address_componentsから都道府県を抽出
+      const addressComponents = result.results[0].address_components;
+      const prefectureComponent = addressComponents.find(c =>
+        c.types.includes('administrative_area_level_1')
+      );
+
+      if (prefectureComponent) {
+        return prefectureComponent.long_name;
+      }
+
+      // 都道府県が見つからない場合は国名を返す（海外対応）
+      const countryComponent = addressComponents.find(c =>
+        c.types.includes('country')
+      );
+      if (countryComponent && countryComponent.long_name !== '日本') {
+        return countryComponent.long_name;
+      }
+    }
+
+    return '不明';
+  } catch (error) {
+    console.warn('都道府県取得エラー:', error);
+    return null; // エラー時はnullを返し、投稿は続行
+  }
 }

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理者：都道府県一括更新 | Tanuki Map</title>
+  <link rel="stylesheet" href="css/main.css?v=10">
+  <style>
+    .admin-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+      padding-top: calc(70px + 2rem);
+    }
+    .admin-card {
+      background: white;
+      border-radius: 8px;
+      padding: 2rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 1rem;
+    }
+    .admin-card h2 {
+      margin-top: 0;
+      color: #8B4513;
+    }
+    .progress-info {
+      background: #f5f5f5;
+      padding: 1rem;
+      border-radius: 4px;
+      margin: 1rem 0;
+      font-family: monospace;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .progress-line {
+      margin: 0.25rem 0;
+    }
+    .progress-line.success { color: green; }
+    .progress-line.error { color: red; }
+    .progress-line.skip { color: orange; }
+    .stats {
+      display: flex;
+      gap: 2rem;
+      margin: 1rem 0;
+    }
+    .stat-item {
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #8B4513;
+    }
+    .stat-label {
+      font-size: 0.9rem;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-container">
+      <button id="backBtn" class="btn-secondary">← 戻る</button>
+      <h1>🔧 管理者ツール</h1>
+      <div id="userInfo" style="display: none;">
+        <img id="userPhoto" alt="User" class="user-photo">
+        <span id="userName"></span>
+      </div>
+    </div>
+  </header>
+
+  <div class="admin-container">
+    <div class="admin-card">
+      <h2>都道府県データ一括更新</h2>
+      <p>既存のたぬきデータに都道府県情報を追加します。<br>
+      緯度経度から逆ジオコーディングして都道府県を取得し、Firestoreを更新します。</p>
+
+      <div class="stats">
+        <div class="stat-item">
+          <div class="stat-value" id="totalCount">-</div>
+          <div class="stat-label">総件数</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="needUpdateCount">-</div>
+          <div class="stat-label">更新対象</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="completedCount">0</div>
+          <div class="stat-label">完了</div>
+        </div>
+      </div>
+
+      <button id="checkBtn" class="btn-secondary">状況を確認</button>
+      <button id="updateBtn" class="btn-primary" disabled>一括更新を実行</button>
+
+      <div id="progressInfo" class="progress-info" style="display: none;"></div>
+    </div>
+  </div>
+
+  <div id="loading" class="loading">処理中...</div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+  <!-- アプリのJavaScript -->
+  <script src="js/config.js?v=10"></script>
+  <script src="js/utils.js?v=10"></script>
+  <script src="js/firebase-init.js?v=10"></script>
+  <script src="js/auth.js?v=10"></script>
+
+  <!-- Google Maps API -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA_djMpDkNHMKX7CPsK81m8TSVB42gC6gw&callback=initAdmin"></script>
+
+  <script>
+    let allTanukis = [];
+    let tanukisToUpdate = [];
+
+    // 初期化
+    window.initAdmin = async function() {
+      if (!initFirebase()) {
+        showError('Firebaseの初期化に失敗しました');
+        return;
+      }
+      setupFirestore();
+      initAuth();
+
+      document.getElementById('backBtn').addEventListener('click', () => {
+        window.location.href = 'index.html';
+      });
+
+      document.getElementById('checkBtn').addEventListener('click', checkStatus);
+      document.getElementById('updateBtn').addEventListener('click', runBulkUpdate);
+    };
+
+    // 状況確認
+    async function checkStatus() {
+      showLoading('データを確認中...');
+
+      try {
+        const snapshot = await db.collection('tanukis')
+          .where('status', '==', 'active')
+          .get();
+
+        allTanukis = [];
+        tanukisToUpdate = [];
+
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          data.id = doc.id;
+          allTanukis.push(data);
+
+          // prefectureがないものを更新対象に
+          if (!data.prefecture && data.location) {
+            tanukisToUpdate.push(data);
+          }
+        });
+
+        document.getElementById('totalCount').textContent = allTanukis.length;
+        document.getElementById('needUpdateCount').textContent = tanukisToUpdate.length;
+
+        if (tanukisToUpdate.length > 0) {
+          document.getElementById('updateBtn').disabled = false;
+          addProgressLine(`${tanukisToUpdate.length}件の更新対象が見つかりました`, 'info');
+        } else {
+          addProgressLine('すべてのデータに都道府県が設定されています', 'success');
+        }
+
+        hideLoading();
+      } catch (error) {
+        hideLoading();
+        console.error('確認エラー:', error);
+        showError('データの確認に失敗しました');
+      }
+    }
+
+    // 一括更新実行
+    async function runBulkUpdate() {
+      if (tanukisToUpdate.length === 0) {
+        showError('更新対象がありません');
+        return;
+      }
+
+      document.getElementById('updateBtn').disabled = true;
+      document.getElementById('checkBtn').disabled = true;
+      showLoading('更新中...');
+
+      let completed = 0;
+      let errors = 0;
+
+      for (const tanuki of tanukisToUpdate) {
+        try {
+          const { latitude, longitude } = tanuki.location;
+          const prefecture = await getPrefecture(latitude, longitude);
+
+          if (prefecture) {
+            await db.collection('tanukis').doc(tanuki.id).update({
+              prefecture: prefecture
+            });
+            completed++;
+            addProgressLine(`✓ ${tanuki.id}: ${prefecture}`, 'success');
+          } else {
+            addProgressLine(`⚠ ${tanuki.id}: 都道府県を取得できませんでした`, 'skip');
+          }
+        } catch (error) {
+          errors++;
+          addProgressLine(`✗ ${tanuki.id}: ${error.message}`, 'error');
+        }
+
+        document.getElementById('completedCount').textContent = completed;
+
+        // API制限対策: 少し待機
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+
+      hideLoading();
+      addProgressLine(`\n完了: ${completed}件成功, ${errors}件エラー`, 'info');
+      showSuccess(`更新完了: ${completed}件`);
+
+      document.getElementById('checkBtn').disabled = false;
+    }
+
+    // 都道府県を取得
+    async function getPrefecture(lat, lng) {
+      const geocoder = new google.maps.Geocoder();
+
+      return new Promise((resolve) => {
+        geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+          if (status === 'OK' && results[0]) {
+            const addressComponents = results[0].address_components;
+            const prefectureComponent = addressComponents.find(c =>
+              c.types.includes('administrative_area_level_1')
+            );
+
+            if (prefectureComponent) {
+              resolve(prefectureComponent.long_name);
+              return;
+            }
+
+            // 海外の場合は国名
+            const countryComponent = addressComponents.find(c =>
+              c.types.includes('country')
+            );
+            if (countryComponent && countryComponent.long_name !== '日本') {
+              resolve(countryComponent.long_name);
+              return;
+            }
+          }
+          resolve('不明');
+        });
+      });
+    }
+
+    // 進捗表示に追加
+    function addProgressLine(text, type) {
+      const container = document.getElementById('progressInfo');
+      container.style.display = 'block';
+
+      const line = document.createElement('div');
+      line.className = `progress-line ${type}`;
+      line.textContent = text;
+      container.appendChild(line);
+      container.scrollTop = container.scrollHeight;
+    }
+  </script>
+</body>
+</html>

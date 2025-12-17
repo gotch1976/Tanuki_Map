@@ -7,6 +7,11 @@ let selectedLocation = null;
 let tempMarker = null; // 仮マーカー
 let longPressTimer = null; // 長押し用タイマー
 
+// 新規たぬき通知用
+const LAST_VISIT_KEY = 'tanukiMap_lastVisit';
+let newTanukisList = [];
+let currentNewTanukiIndex = 0;
+
 // 地図の初期化
 function initMap() {
   console.log('initMap() 開始');
@@ -202,6 +207,17 @@ async function loadTanukis() {
   try {
     showLoading('たぬきを読み込み中...');
 
+    // 前回訪問時刻を取得（エラー対策付き）
+    let lastVisitTime = null;
+    try {
+      const lastVisit = localStorage.getItem(LAST_VISIT_KEY);
+      lastVisitTime = lastVisit ? new Date(lastVisit) : null;
+      // 現在時刻を保存（次回用）
+      localStorage.setItem(LAST_VISIT_KEY, new Date().toISOString());
+    } catch (e) {
+      console.warn('localStorage unavailable:', e);
+    }
+
     const snapshot = await db.collection('tanukis')
       .where('status', '==', 'active')
       .get();
@@ -210,15 +226,36 @@ async function loadTanukis() {
     markers.forEach(marker => marker.setMap(null));
     markers = [];
 
+    // 新規投稿を検出
+    newTanukisList = [];
+
     // 各たぬきのマーカーを追加
     snapshot.forEach((doc) => {
       const tanuki = doc.data();
       tanuki.id = doc.id;
       addMarker(tanuki);
+
+      // 新規投稿チェック（前回訪問時刻以降に作成されたもの）
+      if (lastVisitTime && tanuki.createdAt?.toDate() > lastVisitTime) {
+        newTanukisList.push(tanuki);
+      }
+    });
+
+    // 新規投稿を新しい順にソート
+    newTanukisList.sort((a, b) => {
+      const dateA = a.createdAt?.toDate() || new Date(0);
+      const dateB = b.createdAt?.toDate() || new Date(0);
+      return dateB - dateA;
     });
 
     hideLoading();
     console.log(`${snapshot.size}個のたぬきを読み込みました`);
+
+    // 新規投稿があれば通知を表示
+    if (newTanukisList.length > 0) {
+      currentNewTanukiIndex = 0;
+      showNewTanukiNotification();
+    }
 
   } catch (error) {
     hideLoading();
@@ -352,5 +389,90 @@ async function loadTanukiForEdit(tanukiId) {
     hideLoading();
     console.error('編集データ読み込みエラー:', error);
     showError('データの読み込みに失敗しました');
+  }
+}
+
+// ========== 新規たぬき通知機能 ==========
+
+// 通知バナーを表示
+function showNewTanukiNotification() {
+  // 既存の通知があれば削除
+  hideNewTanukiNotification();
+
+  const tanuki = newTanukisList[currentNewTanukiIndex];
+  if (!tanuki) return;
+
+  const total = newTanukisList.length;
+  const current = currentNewTanukiIndex + 1;
+  const episodePreview = tanuki.episode.length > 30
+    ? tanuki.episode.substring(0, 30) + '...'
+    : tanuki.episode;
+
+  const notification = document.createElement('div');
+  notification.id = 'newTanukiNotification';
+  notification.className = 'new-tanuki-notification';
+  notification.innerHTML = `
+    <div class="notification-header">
+      <span>新しいたぬきが${total}件投稿されました！</span>
+      <button class="notification-close" onclick="hideNewTanukiNotification()">×</button>
+    </div>
+    <div class="notification-content">
+      <span class="notification-counter">(${current}/${total})</span>
+      <span class="notification-episode">${episodePreview}</span>
+    </div>
+    <div class="notification-actions">
+      <button class="btn-secondary notification-btn" onclick="navigateToPrevNewTanuki()" ${current === 1 ? 'disabled' : ''}>← 前へ</button>
+      <button class="btn-secondary notification-btn" onclick="navigateToNextNewTanuki()" ${current === total ? 'disabled' : ''}>次へ →</button>
+    </div>
+  `;
+
+  document.body.appendChild(notification);
+
+  // 最初のたぬきの位置にマップを移動
+  navigateToNewTanuki(currentNewTanukiIndex);
+}
+
+// 通知バナーを非表示
+function hideNewTanukiNotification() {
+  const notification = document.getElementById('newTanukiNotification');
+  if (notification) {
+    notification.remove();
+  }
+}
+
+// 指定インデックスのたぬきにマップを移動
+function navigateToNewTanuki(index) {
+  const tanuki = newTanukisList[index];
+  if (!tanuki || !tanuki.location) return;
+
+  const { latitude, longitude } = tanuki.location;
+  map.setCenter({ lat: latitude, lng: longitude });
+  map.setZoom(16);
+
+  // マーカーを見つけてInfoWindowを開く
+  const marker = markers.find(m => {
+    const pos = m.getPosition();
+    return Math.abs(pos.lat() - latitude) < 0.0001 &&
+           Math.abs(pos.lng() - longitude) < 0.0001;
+  });
+
+  if (marker) {
+    google.maps.event.trigger(marker, 'click');
+  }
+}
+
+// 前のたぬきへ
+function navigateToPrevNewTanuki() {
+  if (currentNewTanukiIndex > 0) {
+    currentNewTanukiIndex--;
+    showNewTanukiNotification();
+  }
+}
+
+// 次のたぬきへ
+function navigateToNextNewTanuki() {
+  if (currentNewTanukiIndex < newTanukisList.length - 1) {
+    currentNewTanukiIndex++;
+    showNewTanukiNotification();
   }
 }
