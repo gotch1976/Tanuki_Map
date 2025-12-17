@@ -223,9 +223,14 @@ async function handlePhotoSelect(e) {
   const file = e.target.files[0];
   if (!file) return;
 
-  // 画像ファイルかチェック
-  if (!file.type.startsWith('image/')) {
-    showError('画像ファイルを選択してください');
+  // 画像ファイルかチェック（MIMEタイプまたは拡張子で判定）
+  // iPhoneのHEIC画像はfile.typeが空になることがあるため、拡張子でも判定
+  const fileName = file.name.toLowerCase();
+  const isImageByMime = file.type.startsWith('image/');
+  const isImageByExt = /\.(jpg|jpeg|png|gif|webp|heic|heif|bmp)$/i.test(fileName);
+
+  if (!isImageByMime && !isImageByExt) {
+    showError('対応している画像形式を選択してください');
     return;
   }
 
