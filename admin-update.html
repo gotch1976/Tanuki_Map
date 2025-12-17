@@ -103,6 +103,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 
   <!-- アプリのJavaScript -->
   <script src="js/config.js?v=10"></script>
@@ -110,38 +111,65 @@
   <script src="js/firebase-init.js?v=10"></script>
   <script src="js/auth.js?v=10"></script>
 
-  <!-- Google Maps API -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA_djMpDkNHMKX7CPsK81m8TSVB42gC6gw&callback=initAdmin"></script>
-
   <script>
     let allTanukis = [];
     let tanukisToUpdate = [];
 
-    // 初期化
-    window.initAdmin = async function() {
+    // 初期化（Google Maps APIコールバック）
+    window.initAdmin = function() {
+      console.log('initAdmin 開始');
+
       if (!initFirebase()) {
         showError('Firebaseの初期化に失敗しました');
         return;
       }
       setupFirestore();
+      console.log('Firestore初期化完了, db:', db);
+
       initAuth();
 
       document.getElementById('backBtn').addEventListener('click', () => {
         window.location.href = 'index.html';
       });
 
-      document.getElementById('checkBtn').addEventListener('click', checkStatus);
-      document.getElementById('updateBtn').addEventListener('click', runBulkUpdate);
+      const checkBtn = document.getElementById('checkBtn');
+      const updateBtn = document.getElementById('updateBtn');
+
+      console.log('checkBtn:', checkBtn);
+      console.log('updateBtn:', updateBtn);
+
+      checkBtn.addEventListener('click', () => {
+        console.log('checkBtn クリック');
+        checkStatus();
+      });
+
+      updateBtn.addEventListener('click', () => {
+        console.log('updateBtn クリック');
+        runBulkUpdate();
+      });
+
+      console.log('initAdmin 完了');
     };
 
     // 状況確認
     async function checkStatus() {
+      console.log('checkStatus 開始');
+
+      // ログインチェック
+      if (!currentUser) {
+        showError('ログインしてください');
+        return;
+      }
+      console.log('currentUser:', currentUser.email);
+
       showLoading('データを確認中...');
 
       try {
+        console.log('Firestoreクエリ開始');
         const snapshot = await db.collection('tanukis')
           .where('status', '==', 'active')
           .get();
+        console.log('Firestoreクエリ完了, 件数:', snapshot.size);
 
         allTanukis = [];
         tanukisToUpdate = [];
@@ -151,11 +179,14 @@
           data.id = doc.id;
           allTanukis.push(data);
 
-          // prefectureがないものを更新対象に
-          if (!data.prefecture && data.location) {
+          // prefectureがない、または「不明」のものを更新対象に
+          if ((!data.prefecture || data.prefecture === '不明') && data.location) {
             tanukisToUpdate.push(data);
           }
         });
+
+        console.log('allTanukis:', allTanukis.length);
+        console.log('tanukisToUpdate:', tanukisToUpdate.length);
 
         document.getElementById('totalCount').textContent = allTanukis.length;
         document.getElementById('needUpdateCount').textContent = tanukisToUpdate.length;
@@ -171,7 +202,7 @@
       } catch (error) {
         hideLoading();
         console.error('確認エラー:', error);
-        showError('データの確認に失敗しました');
+        showError('データの確認に失敗しました: ' + error.message);
       }
     }
 
@@ -226,14 +257,20 @@
       const geocoder = new google.maps.Geocoder();
 
       return new Promise((resolve) => {
+        console.log('Geocoding:', lat, lng);
         geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+          console.log('Geocode結果:', status, results);
+
           if (status === 'OK' && results[0]) {
             const addressComponents = results[0].address_components;
+            console.log('address_components:', addressComponents);
+
             const prefectureComponent = addressComponents.find(c =>
               c.types.includes('administrative_area_level_1')
             );
 
             if (prefectureComponent) {
+              console.log('都道府県発見:', prefectureComponent.long_name);
               resolve(prefectureComponent.long_name);
               return;
             }
@@ -243,10 +280,12 @@
               c.types.includes('country')
             );
             if (countryComponent && countryComponent.long_name !== '日本') {
+              console.log('海外:', countryComponent.long_name);
               resolve(countryComponent.long_name);
               return;
             }
           }
+          console.log('都道府県不明');
           resolve('不明');
         });
       });
@@ -264,5 +303,8 @@
       container.scrollTop = container.scrollHeight;
     }
   </script>
+
+  <!-- Google Maps API (initAdmin定義後に読み込む) -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA_djMpDkNHMKX7CPsK81m8TSVB42gC6gw&callback=initAdmin"></script>
 </body>
 </html>

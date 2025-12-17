@@ -211,6 +211,7 @@ async function loadTanukis() {
     let lastVisitTime = null;
     try {
       const lastVisit = localStorage.getItem(LAST_VISIT_KEY);
+      console.log('前回訪問時刻:', lastVisit);
       lastVisitTime = lastVisit ? new Date(lastVisit) : null;
       // 現在時刻を保存（次回用）
       localStorage.setItem(LAST_VISIT_KEY, new Date().toISOString());
@@ -250,11 +251,15 @@ async function loadTanukis() {
 
     hideLoading();
     console.log(`${snapshot.size}個のたぬきを読み込みました`);
+    console.log('新規たぬき件数:', newTanukisList.length);
 
     // 新規投稿があれば通知を表示
     if (newTanukisList.length > 0) {
+      console.log('通知を表示します');
       currentNewTanukiIndex = 0;
       showNewTanukiNotification();
+    } else {
+      console.log('新規たぬきなし（前回訪問以降の投稿がない）');
     }
 
   } catch (error) {
@@ -270,14 +275,21 @@ function addMarker(tanuki) {
 
   const { latitude, longitude } = tanuki.location;
 
+  // ショップかどうかでマーカーアイコンを切り替え
+  const isShop = tanuki.isShop;
+  const iconUrl = isShop
+    ? 'img/tanuki-shop-marker.png?v=2'
+    : 'img/tanuki-marker.png';
+  const iconSize = isShop ? 48 : 32;
+
   // カスタムアイコン(信楽焼の狸)
   const marker = new google.maps.Marker({
     position: { lat: latitude, lng: longitude },
     map: map,
     icon: {
-      url: 'img/tanuki-marker.png',
-      scaledSize: new google.maps.Size(32, 32),
-      anchor: new google.maps.Point(16, 32)
+      url: iconUrl,
+      scaledSize: new google.maps.Size(iconSize, iconSize),
+      anchor: new google.maps.Point(iconSize / 2, iconSize)
     }
   });
 
@@ -332,9 +344,12 @@ function createPopupContent(tanuki, avgRating, ratingCount) {
     ? '⭐ 読み込み中...'
     : (avgRating !== '-' ? `⭐ ${avgRating} (${ratingCount}件)` : '⭐ 未評価');
 
+  const shopBadge = tanuki.isShop ? '<p><span style="background: #4CAF50; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8em;">🛒 購入可</span></p>' : '';
+
   return `
     <div class="tanuki-popup">
       <h3>🦝 ${tanuki.episode.substring(0, 50)}${tanuki.episode.length > 50 ? '...' : ''}</h3>
+      ${shopBadge}
       <p><strong>評価:</strong> ${ratingText}</p>
       <p><strong>投稿者:</strong> ${tanuki.userName}</p>
       <p><strong>発見日:</strong> ${tanuki.discoveryDate ? formatDate(tanuki.discoveryDate) : '不明'}</p>

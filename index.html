@@ -6,8 +6,8 @@
   <title>たぬきマップ | Tanuki Map</title>
 
   <!-- カスタムCSS -->
-  <link rel="stylesheet" href="css/main.css?v=10">
-  <link rel="stylesheet" href="css/map.css?v=10">
+  <link rel="stylesheet" href="css/main.css?v=17">
+  <link rel="stylesheet" href="css/map.css?v=17">
 
   <!-- PWA設定 -->
   <link rel="manifest" href="manifest.json">
@@ -20,18 +20,19 @@
       <div style="display: flex; align-items: center; gap: 0.5rem;">
         <h1><img src="img/tanuki-marker.png" alt="たぬき" style="width: 28px; height: 28px; vertical-align: middle;"> たぬきマップ</h1>
         <button id="reloadBtn" class="reload-btn" title="マップを更新">🔄</button>
-        <button id="listViewBtn" class="btn-secondary" title="リストで見る">📋</button>
-      </div>
-      <div class="header-actions">
-        <div id="userInfo" style="display: none;">
-          <img id="userPhoto" alt="User" class="user-photo">
-          <span id="userName"></span>
-          <button id="logoutBtn" class="btn-secondary">ログアウト</button>
-        </div>
-        <button id="loginBtn" class="btn-primary">Googleでログイン</button>
+        <button id="listViewBtn" class="icon-btn" title="リストで見る">☰</button>
       </div>
     </div>
   </header>
+
+  <!-- 右上固定のユーザー情報 -->
+  <div class="user-fixed">
+    <div id="userInfo" style="display: none;">
+      <img id="userPhoto" alt="User" class="user-photo">
+      <button id="logoutBtn" class="btn-logout">ログアウト</button>
+    </div>
+    <button id="loginBtn" class="btn-login">ログイン</button>
+  </div>
 
   <!-- 地図コンテナ -->
   <div id="map"></div>
@@ -105,6 +106,13 @@
           <input type="hidden" id="initialRatingInput" value="0">
         </div>
 
+        <div class="form-group" id="shopCheckGroup">
+          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <input type="checkbox" id="isShopCheckbox" style="width: 18px; height: 18px;">
+            🏪 このたぬきは購入できる（ショップ・お土産屋など）
+          </label>
+        </div>
+
         <div class="form-actions">
           <button type="button" class="btn-secondary" id="cancelBtn">キャンセル</button>
           <button type="submit" class="btn-primary" id="submitBtn">保存</button>
@@ -125,12 +133,12 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 
   <!-- アプリのJavaScript (Google Maps APIより先に読み込む) -->
-  <script src="js/config.js?v=10"></script>
-  <script src="js/utils.js?v=10"></script>
-  <script src="js/firebase-init.js?v=10"></script>
-  <script src="js/auth.js?v=10"></script>
-  <script src="js/add-tanuki.js?v=10"></script>
-  <script src="js/map.js?v=10"></script>
+  <script src="js/config.js?v=17"></script>
+  <script src="js/utils.js?v=17"></script>
+  <script src="js/firebase-init.js?v=17"></script>
+  <script src="js/auth.js?v=17"></script>
+  <script src="js/add-tanuki.js?v=17"></script>
+  <script src="js/map.js?v=17"></script>
 
   <!-- Google Maps JavaScript API (コールバック関数が定義された後に読み込む) -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA_djMpDkNHMKX7CPsK81m8TSVB42gC6gw&callback=initializeApp"></script>

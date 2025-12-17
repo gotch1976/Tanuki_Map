@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>重複データ削除 | Tanuki Map Admin</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+    h1 { color: #8B4513; }
+    .btn { padding: 10px 20px; margin: 5px; cursor: pointer; border: none; border-radius: 4px; }
+    .btn-primary { background: #8B4513; color: white; }
+    .btn-danger { background: #dc3545; color: white; }
+    .item { padding: 10px; margin: 5px 0; background: #f5f5f5; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
+    .item.duplicate { background: #ffebee; }
+    .item.keep { background: #e8f5e9; }
+    #log { background: #333; color: #0f0; padding: 15px; border-radius: 4px; max-height: 300px; overflow-y: auto; font-family: monospace; white-space: pre-wrap; }
+    .info { font-size: 0.85em; color: #666; }
+  </style>
+</head>
+<body>
+  <h1>重複データ削除ツール</h1>
+
+  <div id="userArea">
+    <button id="loginBtn" class="btn btn-primary">Googleでログイン</button>
+    <span id="userName"></span>
+  </div>
+
+  <hr>
+
+  <button id="checkBtn" class="btn btn-primary" disabled>データ確認</button>
+  <button id="deleteBtn" class="btn btn-danger" disabled>重複を削除</button>
+
+  <h2>検出された重複</h2>
+  <div id="duplicateList"></div>
+
+  <h2>ログ</h2>
+  <div id="log"></div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+  <script src="js/config.js"></script>
+  <script>
+    // Firebase初期化
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let currentUser = null;
+    let duplicates = []; // { keep: tanuki, delete: tanuki[] }
+
+    function log(msg) {
+      const logEl = document.getElementById('log');
+      logEl.textContent += new Date().toLocaleTimeString() + ' ' + msg + '\n';
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    // 認証
+    document.getElementById('loginBtn').addEventListener('click', async () => {
+      try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        await auth.signInWithPopup(provider);
+      } catch (e) {
+        log('ログインエラー: ' + e.message);
+      }
+    });
+
+    auth.onAuthStateChanged(user => {
+      currentUser = user;
+      if (user) {
+        document.getElementById('userName').textContent = user.email;
+        document.getElementById('loginBtn').style.display = 'none';
+        document.getElementById('checkBtn').disabled = false;
+        log('ログイン: ' + user.email);
+      }
+    });
+
+    // 全データ表示
+    document.getElementById('checkBtn').addEventListener('click', async () => {
+      log('全データを取得中...');
+      duplicates = [];
+
+      try {
+        const snapshot = await db.collection('tanukis').where('status', '==', 'active').get();
+        log('取得件数: ' + snapshot.size);
+
+        // 全データを取得
+        const allTanukis = [];
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          data.id = doc.id;
+          allTanukis.push(data);
+        });
+
+        // 全データをログに出力
+        log('--- 全データ一覧 ---');
+        allTanukis.forEach((t, i) => {
+          log(`${i+1}. [${t.isShop ? 'SHOP' : '    '}] ${t.episode.substring(0, 40)}... (ID: ${t.id})`);
+        });
+
+        // 表示（全データをリスト表示、削除ボタン付き）
+        const listEl = document.getElementById('duplicateList');
+        listEl.innerHTML = '<p>削除したいアイテムの「削除」ボタンをクリックしてください</p>';
+
+        allTanukis.forEach((t, i) => {
+          const el = document.createElement('div');
+          el.className = 'item' + (t.isShop ? ' keep' : '');
+          el.innerHTML = `
+            <div style="flex: 1;">
+              <strong>${t.isShop ? '🛒 ' : ''}${t.episode.substring(0, 60)}...</strong>
+              <div class="info">ID: ${t.id} | 県: ${t.prefecture || '未設定'}</div>
+            </div>
+            <button class="btn btn-danger" onclick="deleteSingle('${t.id}')">削除</button>
+          `;
+          listEl.appendChild(el);
+        });
+
+      } catch (e) {
+        log('エラー: ' + e.message);
+      }
+    });
+
+    // 個別削除
+    window.deleteSingle = async function(id) {
+      if (!confirm('このアイテムを削除しますか？ ID: ' + id)) return;
+      try {
+        await db.collection('tanukis').doc(id).update({ status: 'deleted' });
+        log('削除完了: ' + id);
+        alert('削除しました。再度「データ確認」をクリックして更新してください。');
+      } catch (e) {
+        log('削除エラー: ' + e.message);
+        alert('削除エラー: ' + e.message);
+      }
+    };
+
+    // 削除実行
+    document.getElementById('deleteBtn').addEventListener('click', async () => {
+      if (!confirm('本当に削除しますか？')) return;
+
+      log('削除開始...');
+      let deleted = 0;
+
+      for (const dup of duplicates) {
+        for (const d of dup.delete) {
+          try {
+            // 論理削除（status を deleted に変更）
+            await db.collection('tanukis').doc(d.id).update({ status: 'deleted' });
+            log('削除完了: ' + d.id);
+            deleted++;
+          } catch (e) {
+            log('削除失敗: ' + d.id + ' - ' + e.message);
+          }
+        }
+      }
+
+      log('完了: ' + deleted + '件削除');
+      document.getElementById('deleteBtn').disabled = true;
+
+      // リスト更新
+      document.getElementById('checkBtn').click();
+    });
+  </script>
+</body>
+</html>

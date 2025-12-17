@@ -172,6 +172,12 @@ function openModal(tanuki = null) {
       document.getElementById('locationInfo').textContent =
         `緯度: ${selectedLocation.lat.toFixed(6)}, 経度: ${selectedLocation.lng.toFixed(6)}`;
     }
+
+    // ショップチェックボックスをリセット
+    const isShopCheckbox = document.getElementById('isShopCheckbox');
+    if (isShopCheckbox) {
+      isShopCheckbox.checked = false;
+    }
   }
 
   modal.style.display = 'block';
@@ -215,6 +221,12 @@ function fillForm(tanuki) {
   const anonymousCheckbox = document.getElementById('anonymousCheckbox');
   if (anonymousCheckbox) {
     anonymousCheckbox.checked = tanuki.isAnonymous || false;
+  }
+
+  // ショップ設定
+  const isShopCheckbox = document.getElementById('isShopCheckbox');
+  if (isShopCheckbox) {
+    isShopCheckbox.checked = tanuki.isShop || false;
   }
 }
 
@@ -354,6 +366,10 @@ async function handleSubmit(e) {
     // 投稿者名の取得
     const userNameInput = document.getElementById('userNameInput');
     const inputUserName = userNameInput ? userNameInput.value.trim() : '';
+
+    // ショップフラグの取得
+    const isShopCheckbox = document.getElementById('isShopCheckbox');
+    tanukiData.isShop = isShopCheckbox ? isShopCheckbox.checked : false;
 
     if (editingTanukiId) {
       // 編集時: 投稿者本人の場合のみuserNameを更新可能

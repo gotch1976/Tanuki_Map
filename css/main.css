@@ -286,6 +286,82 @@ form {
   transform: rotate(360deg);
 }
 
+/* アイコンボタン（リストなど） */
+.icon-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  color: white;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.icon-btn:hover {
+  background-color: rgba(255,255,255,0.2);
+}
+
+/* 右上固定のユーザー情報 */
+.user-fixed {
+  position: fixed;
+  top: 80px;
+  right: 10px;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.user-fixed #userInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255,255,255,0.95);
+  padding: 6px 10px;
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.user-fixed .user-photo {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+}
+
+.btn-login {
+  background: rgba(255,255,255,0.95);
+  color: #8B4513;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  transition: background-color 0.2s;
+}
+
+.btn-login:hover {
+  background: white;
+}
+
+.btn-logout {
+  background: transparent;
+  color: #666;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: color 0.2s;
+}
+
+.btn-logout:hover {
+  color: #333;
+}
+
 /* 星評価（投稿フォーム用） */
 .star-rating {
   font-size: 2rem;
