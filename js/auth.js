@@ -1,6 +1,7 @@
 // 認証機能
 
 let currentUser = null;
+const NICKNAME_KEY = 'tanukiMap_nickname';
 
 // 認証状態の初期化
 function initAuth() {
@@ -17,10 +18,56 @@ function initAuth() {
   }
 
   // 認証状態の監視
-  auth.onAuthStateChanged((user) => {
-    currentUser = user;
-    updateUI(user);
+  auth.onAuthStateChanged(async (user) => {
+    if (!user) {
+      // 未ログインなら匿名認証
+      try {
+        await auth.signInAnonymously();
+        console.log('匿名ログイン成功');
+      } catch (error) {
+        console.error('匿名ログインエラー:', error);
+      }
+    } else {
+      currentUser = user;
+      updateUI(user);
+    }
   });
+}
+
+// Googleアカウントでログイン済みか
+function isGoogleUser() {
+  return currentUser && !currentUser.isAnonymous;
+}
+
+// 匿名ユーザーか
+function isAnonymousUser() {
+  return currentUser && currentUser.isAnonymous;
+}
+
+// ニックネームを取得
+function getNickname() {
+  try {
+    return localStorage.getItem(NICKNAME_KEY) || '';
+  } catch (e) {
+    return '';
+  }
+}
+
+// ニックネームを保存
+function setNickname(name) {
+  try {
+    localStorage.setItem(NICKNAME_KEY, name);
+  } catch (e) {
+    console.warn('localStorage unavailable:', e);
+  }
+}
+
+// 表示名を取得（Googleユーザーは本名、匿名ユーザーはニックネーム）
+function getDisplayName() {
+  if (isGoogleUser()) {
+    return currentUser.displayName || 'ユーザー';
+  }
+  return getNickname() || 'ゲスト';
 }
 
 // Googleでログイン
@@ -65,8 +112,8 @@ function updateUI(user) {
   const userName = document.getElementById('userName');
   const addTanukiBtn = document.getElementById('addTanukiBtn');
 
-  if (user) {
-    // ログイン済み
+  if (user && !user.isAnonymous) {
+    // Googleログイン済み
     if (loginBtn) loginBtn.style.display = 'none';
     if (userInfo) userInfo.style.display = 'flex';
     if (userPhoto) userPhoto.src = user.photoURL || '';
@@ -74,7 +121,7 @@ function updateUI(user) {
     if (addTanukiBtn) addTanukiBtn.style.display = 'block';
 
   } else {
-    // 未ログイン
+    // 匿名または未ログイン（たぬき投稿不可）
     if (loginBtn) loginBtn.style.display = 'block';
     if (userInfo) userInfo.style.display = 'none';
     if (addTanukiBtn) addTanukiBtn.style.display = 'none';

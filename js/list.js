@@ -185,11 +185,15 @@ function sortAndDisplayTanukis(sortType) {
       break;
 
     case 'rating':
-      // 評価順（高い順、未評価は最後）
+      // 評価順（高い順、同評価なら評価数が多い順、未評価は最後）
       sorted.sort((a, b) => {
-        const ratingA = tanukiRatings[a.id]?.avg || 0;
-        const ratingB = tanukiRatings[b.id]?.avg || 0;
-        return ratingB - ratingA;
+        const ratingA = tanukiRatings[a.id] || { avg: 0, count: 0 };
+        const ratingB = tanukiRatings[b.id] || { avg: 0, count: 0 };
+        // まず評価で比較、同じなら評価数で比較
+        if (ratingB.avg !== ratingA.avg) {
+          return ratingB.avg - ratingA.avg;
+        }
+        return ratingB.count - ratingA.count;
       });
       break;
   }

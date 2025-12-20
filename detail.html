@@ -54,7 +54,11 @@
             <span id="averageRating">-</span>
             <span id="ratingCount">(0件)</span>
           </div>
-          <div id="userRatingArea" style="display: none;">
+          <div id="userRatingArea">
+            <div class="form-group" id="ratingNicknameGroup">
+              <label for="ratingNicknameInput">ニックネーム</label>
+              <input type="text" id="ratingNicknameInput" placeholder="ニックネームを入力" maxlength="20">
+            </div>
             <p class="rating-prompt">あなたの評価:</p>
             <div class="star-rating" id="starRating">
               <span class="star" data-value="1">☆</span>
@@ -83,8 +87,12 @@
           <div id="commentsList" class="comments-list">
             <p class="no-comments">コメントはまだありません</p>
           </div>
-          <div id="userCommentArea" style="display: none;">
+          <div id="userCommentArea">
             <form id="commentForm">
+              <div class="form-group" id="nicknameGroup">
+                <label for="nicknameInput">ニックネーム</label>
+                <input type="text" id="nicknameInput" placeholder="ニックネームを入力" maxlength="20" required>
+              </div>
               <div class="form-group">
                 <label for="commentText">コメントを投稿</label>
                 <textarea id="commentText" placeholder="このたぬきについてコメントを残してください" maxlength="500" required></textarea>
@@ -93,7 +101,6 @@
               <button type="submit" class="btn-primary">コメントを投稿</button>
             </form>
           </div>
-          <p id="loginPrompt" class="login-prompt" style="display: none;">コメントするには<a href="#" id="loginForComment">ログイン</a>してください</p>
         </div>
 
         <!-- アクションボタン -->

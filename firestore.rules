@@ -28,12 +28,12 @@ service cloud.firestore {
       allow delete: if request.auth != null
                     && (resource.data.userId == request.auth.uid || isAdmin());
 
-      // 評価サブコレクション
+      // 評価サブコレクション（匿名ユーザーも可）
       match /ratings/{ratingId} {
         // 誰でも閲覧可能（平均計算用）
         allow read: if true;
 
-        // 作成条件（1人1回のみ）
+        // 作成条件（1人1回のみ、匿名ユーザーも可）
         allow create: if request.auth != null
                       && ratingId == request.auth.uid
                       && request.resource.data.userId == request.auth.uid
@@ -41,7 +41,7 @@ service cloud.firestore {
                       && request.resource.data.rating >= 1
                       && request.resource.data.rating <= 5;
 
-        // 更新は本人のみ可能
+        // 更新は本人のみ可能（匿名ユーザーも可）
         allow update: if request.auth != null
                       && ratingId == request.auth.uid
                       && request.resource.data.rating is int
@@ -52,21 +52,20 @@ service cloud.firestore {
         allow delete: if request.auth != null && isAdmin();
       }
 
-      // コメントサブコレクション
+      // コメントサブコレクション（匿名ユーザーも可）
       match /comments/{commentId} {
         // 誰でも閲覧可能
         allow read: if true;
 
-        // ログインユーザーのみ作成可能
+        // ログインユーザー（匿名含む）のみ作成可能
         allow create: if request.auth != null
                       && request.resource.data.userId == request.auth.uid
                       && request.resource.data.text is string
                       && request.resource.data.text.size() > 0
                       && request.resource.data.text.size() <= 500;
 
-        // 投稿者本人または管理者のみ削除可能
-        allow delete: if request.auth != null
-                      && (resource.data.userId == request.auth.uid || isAdmin());
+        // 削除は管理者のみ
+        allow delete: if request.auth != null && isAdmin();
       }
     }
 

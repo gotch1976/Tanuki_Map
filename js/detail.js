@@ -218,6 +218,8 @@ function updateUserRatingUI(userRating) {
   const ratingActions = document.getElementById('ratingActions');
   const submitBtn = document.getElementById('submitRatingBtn');
   const changeBtn = document.getElementById('changeRatingBtn');
+  const nicknameGroup = document.getElementById('ratingNicknameGroup');
+  const nicknameInput = document.getElementById('ratingNicknameInput');
 
   if (!currentUser) {
     userRatingArea.style.display = 'none';
@@ -225,6 +227,14 @@ function updateUserRatingUI(userRating) {
   }
 
   userRatingArea.style.display = 'block';
+
+  // Googleユーザーはニックネーム入力不要
+  if (isGoogleUser()) {
+    nicknameGroup.style.display = 'none';
+  } else {
+    nicknameGroup.style.display = 'block';
+    nicknameInput.value = getNickname();
+  }
 
   if (userRating !== null) {
     // 評価済み
@@ -236,6 +246,7 @@ function updateUserRatingUI(userRating) {
     submitBtn.style.display = 'none';
     changeBtn.style.display = 'inline-block';
     ratingMessage.textContent = '評価済み';
+    if (nicknameGroup) nicknameGroup.style.display = 'none';
     setupChangeRatingButton();
   } else {
     // 未評価
@@ -373,10 +384,23 @@ function setupStarRatingForChange() {
 async function submitRating(tanukiId, rating) {
   if (!currentUser) return;
 
+  // 匿名ユーザーの場合はニックネームチェック
+  if (isAnonymousUser()) {
+    const nicknameInput = document.getElementById('ratingNicknameInput');
+    const nickname = nicknameInput.value.trim();
+    if (!nickname) {
+      showError('ニックネームを入力してください');
+      nicknameInput.focus();
+      return;
+    }
+    setNickname(nickname);
+  }
+
   try {
     await db.collection('tanukis').doc(tanukiId)
       .collection('ratings').doc(currentUser.uid).set({
         userId: currentUser.uid,
+        userName: getDisplayName(),
         rating: rating,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
@@ -387,6 +411,7 @@ async function submitRating(tanukiId, rating) {
     document.getElementById('ratingMessage').textContent = '評価しました！';
     document.getElementById('submitRatingBtn').style.display = 'none';
     document.getElementById('changeRatingBtn').style.display = 'inline-block';
+    document.getElementById('ratingNicknameGroup').style.display = 'none';
     setupChangeRatingButton();
 
     // 評価を再読み込みして平均を更新
@@ -459,7 +484,8 @@ function displayComments(comments) {
   }
 
   commentsList.innerHTML = comments.map(comment => {
-    const canDelete = currentUser && (currentUser.uid === comment.userId || isCurrentUserAdmin());
+    // 削除は管理者のみ
+    const canDelete = isCurrentUserAdmin();
     const dateStr = comment.createdAt ? formatDate(comment.createdAt) : '';
 
     return `
@@ -489,13 +515,21 @@ function escapeHtml(text) {
 // コメントUIを更新（ログイン状態に応じて表示切り替え）
 function updateCommentUI() {
   const userCommentArea = document.getElementById('userCommentArea');
-  const loginPrompt = document.getElementById('loginPrompt');
   const commentText = document.getElementById('commentText');
   const charCount = document.getElementById('charCount');
+  const nicknameGroup = document.getElementById('nicknameGroup');
+  const nicknameInput = document.getElementById('nicknameInput');
 
   if (currentUser) {
     userCommentArea.style.display = 'block';
-    loginPrompt.style.display = 'none';
+
+    // Googleユーザーはニックネーム入力不要
+    if (isGoogleUser()) {
+      nicknameGroup.style.display = 'none';
+    } else {
+      nicknameGroup.style.display = 'block';
+      nicknameInput.value = getNickname();
+    }
 
     // 文字数カウンター
     commentText.addEventListener('input', () => {
@@ -510,13 +544,6 @@ function updateCommentUI() {
     });
   } else {
     userCommentArea.style.display = 'none';
-    loginPrompt.style.display = 'block';
-
-    // ログインリンク
-    document.getElementById('loginForComment')?.addEventListener('click', (e) => {
-      e.preventDefault();
-      signInWithGoogle();
-    });
   }
 }
 
@@ -537,11 +564,23 @@ async function submitComment() {
     return;
   }
 
+  // 匿名ユーザーの場合はニックネームチェック
+  if (isAnonymousUser()) {
+    const nicknameInput = document.getElementById('nicknameInput');
+    const nickname = nicknameInput.value.trim();
+    if (!nickname) {
+      showError('ニックネームを入力してください');
+      nicknameInput.focus();
+      return;
+    }
+    setNickname(nickname);
+  }
+
   try {
     await db.collection('tanukis').doc(currentTanuki.id)
       .collection('comments').add({
         userId: currentUser.uid,
-        userName: currentUser.displayName || '匿名',
+        userName: getDisplayName(),
         text: text,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
