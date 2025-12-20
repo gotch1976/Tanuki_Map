@@ -131,16 +131,41 @@ function initMap() {
     // モバイル: 長押しで位置選択（clickイベントは使わない）
     let touchStartX = null;
     let touchStartY = null;
+    let currentTouchCount = 0; // 現在の指の本数を追跡
+    let wasCancelled = false; // ピンチ等でキャンセルされたかどうか
+
+    // タイマーをキャンセルする共通関数
+    function cancelLongPress() {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+      touchStartX = null;
+      touchStartY = null;
+      wasCancelled = true;
+    }
 
     mapDiv.addEventListener('touchstart', (e) => {
+      currentTouchCount = e.touches.length;
+      wasCancelled = false;
+
       if (!currentUser) return;
+
+      // 2本指以上の場合はキャンセル（ピンチズーム対策）
+      if (currentTouchCount !== 1) {
+        cancelLongPress();
+        return;
+      }
 
       const touch = e.touches[0];
       touchStartX = touch.clientX;
       touchStartY = touch.clientY;
 
       longPressTimer = setTimeout(() => {
+        // タイマー発火時にキャンセル状態と指の本数を確認
+        if (wasCancelled) return;
         if (touchStartX === null || touchStartY === null) return;
+        if (currentTouchCount !== 1) return;
 
         const rect = mapDiv.getBoundingClientRect();
         const x = touchStartX - rect.left;
@@ -155,24 +180,39 @@ function initMap() {
         const lng = sw.lng() + (x / rect.width) * (ne.lng() - sw.lng());
 
         handleLocationSelect(lat, lng);
-      }, 500);
+      }, 800); // 長押し判定を800msに延長（ピンチ操作との誤認防止）
     }, { passive: true });
 
-    mapDiv.addEventListener('touchend', () => {
-      if (longPressTimer) {
-        clearTimeout(longPressTimer);
-        longPressTimer = null;
-      }
-      touchStartX = null;
-      touchStartY = null;
+    mapDiv.addEventListener('touchend', (e) => {
+      currentTouchCount = e.touches.length;
+      cancelLongPress();
     }, { passive: true });
 
-    mapDiv.addEventListener('touchmove', () => {
+    mapDiv.addEventListener('touchmove', (e) => {
+      currentTouchCount = e.touches.length;
+
       if (longPressTimer) {
-        clearTimeout(longPressTimer);
-        longPressTimer = null;
+        // 2本指になったらキャンセル（ピンチズーム対策）
+        if (currentTouchCount !== 1) {
+          cancelLongPress();
+          return;
+        }
+
+        // 10px以上移動したらキャンセル（スワイプ対策）
+        if (touchStartX !== null && touchStartY !== null) {
+          const touch = e.touches[0];
+          const dx = Math.abs(touch.clientX - touchStartX);
+          const dy = Math.abs(touch.clientY - touchStartY);
+          if (dx > 10 || dy > 10) {
+            cancelLongPress();
+          }
+        }
       }
     }, { passive: true });
+
+    // マップのドラッグ・ズーム開始でもキャンセル
+    map.addListener('dragstart', cancelLongPress);
+    map.addListener('zoom_changed', cancelLongPress);
 
   } else {
     // PC: クリックで位置選択
@@ -280,7 +320,7 @@ function addMarker(tanuki) {
   const iconUrl = isShop
     ? 'img/tanuki-shop-marker.png?v=2'
     : 'img/tanuki-marker.png';
-  const iconSize = isShop ? 48 : 32;
+  const iconSize = isShop ? 32 : 24;
 
   // カスタムアイコン(信楽焼の狸)
   const marker = new google.maps.Marker({
