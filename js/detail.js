@@ -219,7 +219,6 @@ function updateUserRatingUI(userRating) {
   const submitBtn = document.getElementById('submitRatingBtn');
   const changeBtn = document.getElementById('changeRatingBtn');
   const nicknameGroup = document.getElementById('ratingNicknameGroup');
-  const nicknameInput = document.getElementById('ratingNicknameInput');
 
   if (!currentUser) {
     userRatingArea.style.display = 'none';
@@ -228,13 +227,8 @@ function updateUserRatingUI(userRating) {
 
   userRatingArea.style.display = 'block';
 
-  // Googleユーザーはニックネーム入力不要
-  if (isGoogleUser()) {
-    nicknameGroup.style.display = 'none';
-  } else {
-    nicknameGroup.style.display = 'block';
-    nicknameInput.value = getNickname();
-  }
+  // 評価はニックネーム入力不要（匿名評価可）
+  if (nicknameGroup) nicknameGroup.style.display = 'none';
 
   if (userRating !== null) {
     // 評価済み
@@ -384,23 +378,12 @@ function setupStarRatingForChange() {
 async function submitRating(tanukiId, rating) {
   if (!currentUser) return;
 
-  // 匿名ユーザーの場合はニックネームチェック
-  if (isAnonymousUser()) {
-    const nicknameInput = document.getElementById('ratingNicknameInput');
-    const nickname = nicknameInput.value.trim();
-    if (!nickname) {
-      showError('ニックネームを入力してください');
-      nicknameInput.focus();
-      return;
-    }
-    setNickname(nickname);
-  }
-
+  // 匿名評価（ニックネーム不要）
   try {
     await db.collection('tanukis').doc(tanukiId)
       .collection('ratings').doc(currentUser.uid).set({
         userId: currentUser.uid,
-        userName: getDisplayName(),
+        userName: isAnonymousUser() ? '匿名' : getDisplayName(),
         rating: rating,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
