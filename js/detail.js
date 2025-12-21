@@ -506,12 +506,23 @@ function updateCommentUI() {
   if (currentUser) {
     userCommentArea.style.display = 'block';
 
-    // Googleユーザーはニックネーム入力不要
+    // Googleユーザーは自動的にアカウント名を使用（ニックネーム入力不要）
     if (isGoogleUser()) {
       nicknameGroup.style.display = 'none';
+      // Googleアカウント名を表示
+      const googleUserInfo = document.getElementById('googleUserInfo');
+      if (googleUserInfo) {
+        googleUserInfo.style.display = 'block';
+        googleUserInfo.textContent = `投稿者: ${getDisplayName()}`;
+      }
     } else {
+      // 匿名ユーザーはニックネーム入力必須
       nicknameGroup.style.display = 'block';
       nicknameInput.value = getNickname();
+      const googleUserInfo = document.getElementById('googleUserInfo');
+      if (googleUserInfo) {
+        googleUserInfo.style.display = 'none';
+      }
     }
 
     // 文字数カウンター
