@@ -2,7 +2,7 @@
 
 let map;
 let markers = [];
-let markerClusterer = null; // マーカークラスタ
+let cluster = null; // マーカークラスタ
 let currentInfoWindow = null;
 let selectedLocation = null;
 let tempMarker = null; // 仮マーカー
@@ -265,9 +265,9 @@ async function loadTanukis() {
       .get();
 
     // 既存のマーカーとクラスタを削除
-    if (markerClusterer) {
-      markerClusterer.clearMarkers();
-      markerClusterer = null;
+    if (cluster) {
+      cluster.clearMarkers();
+      cluster = null;
     }
     markers.forEach(marker => marker.setMap(null));
     markers = [];
@@ -295,8 +295,8 @@ async function loadTanukis() {
     });
 
     // マーカークラスタを作成
-    if (markers.length > 0 && typeof MarkerClusterer !== 'undefined') {
-      markerClusterer = new MarkerClusterer({
+    if (markers.length > 0 && window.markerClusterer) {
+      cluster = new window.markerClusterer.MarkerClusterer({
         map,
         markers,
         renderer: {
