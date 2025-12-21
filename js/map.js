@@ -312,9 +312,9 @@ async function loadTanukis() {
               },
               label: {
                 text: String(count),
-                color: '#8B4513',
+                color: '#FFFFFF',
                 fontWeight: 'bold',
-                fontSize: '11px',
+                fontSize: '12px',
                 className: 'cluster-label'
               },
               zIndex: Number(google.maps.Marker.MAX_ZINDEX) + count

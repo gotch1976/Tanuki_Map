@@ -90,6 +90,15 @@
   margin-bottom: 0.5rem;
 }
 
+/* クラスターラベル */
+.cluster-label {
+  text-shadow:
+    -1px -1px 0 #8B4513,
+    1px -1px 0 #8B4513,
+    -1px 1px 0 #8B4513,
+    1px 1px 0 #8B4513;
+}
+
 @media (max-width: 768px) {
   #map {
     top: 70px;
