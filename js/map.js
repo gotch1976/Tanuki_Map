@@ -301,21 +301,21 @@ async function loadTanukis() {
         markers,
         renderer: {
           render: ({ count, position }) => {
+            // たぬきアイコンのサイズ（数が多いほど大きく）
+            const size = Math.min(32 + count * 2, 48);
             return new google.maps.Marker({
               position,
               icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 20 + Math.min(count, 10) * 2,
-                fillColor: '#8B4513',
-                fillOpacity: 0.9,
-                strokeColor: '#5D2E0C',
-                strokeWeight: 2
+                url: 'img/tanuki-marker.png',
+                scaledSize: new google.maps.Size(size, size),
+                anchor: new google.maps.Point(size / 2, size)
               },
               label: {
                 text: String(count),
-                color: 'white',
+                color: '#8B4513',
                 fontWeight: 'bold',
-                fontSize: '12px'
+                fontSize: '11px',
+                className: 'cluster-label'
               },
               zIndex: Number(google.maps.Marker.MAX_ZINDEX) + count
             });
