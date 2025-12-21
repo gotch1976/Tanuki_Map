@@ -509,6 +509,7 @@ function updateCommentUI() {
     // Googleユーザーは自動的にアカウント名を使用（ニックネーム入力不要）
     if (isGoogleUser()) {
       nicknameGroup.style.display = 'none';
+      nicknameInput.required = false; // バリデーションを無効化
       // Googleアカウント名を表示
       const googleUserInfo = document.getElementById('googleUserInfo');
       if (googleUserInfo) {
@@ -518,6 +519,7 @@ function updateCommentUI() {
     } else {
       // 匿名ユーザーはニックネーム入力必須
       nicknameGroup.style.display = 'block';
+      nicknameInput.required = true;
       nicknameInput.value = getNickname();
       const googleUserInfo = document.getElementById('googleUserInfo');
       if (googleUserInfo) {
