@@ -211,15 +211,9 @@ function createTanukiCard(tanuki) {
   const row = document.createElement('div');
   row.className = 'tanuki-row';
 
-  // クリックでマップに遷移し、その位置にフォーカス
+  // クリックで詳細ページに遷移
   row.onclick = () => {
-    const lat = tanuki.location?.latitude;
-    const lng = tanuki.location?.longitude;
-    if (lat && lng) {
-      window.location.href = `index.html?lat=${lat}&lng=${lng}&id=${tanuki.id}`;
-    } else {
-      window.location.href = `detail.html?id=${tanuki.id}`;
-    }
+    window.location.href = `detail.html?id=${tanuki.id}&from=list`;
   };
 
   // エピソードのプレビュー(最初の50文字)

@@ -47,6 +47,16 @@ function setupEventListeners() {
     }
   });
 
+  // リストに戻るボタン（リストから来た場合のみ表示）
+  const fromList = getUrlParameter('from') === 'list';
+  const listBackBtn = document.getElementById('listBackBtn');
+  if (fromList && listBackBtn) {
+    listBackBtn.style.display = 'inline-block';
+    listBackBtn.addEventListener('click', () => {
+      window.location.href = 'list.html';
+    });
+  }
+
   // 編集ボタン
   document.getElementById('editBtn')?.addEventListener('click', () => {
     // index.htmlに戻って編集モーダルを開く

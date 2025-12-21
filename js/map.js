@@ -2,6 +2,7 @@
 
 let map;
 let markers = [];
+let markerClusterer = null; // マーカークラスタ
 let currentInfoWindow = null;
 let selectedLocation = null;
 let tempMarker = null; // 仮マーカー
@@ -263,7 +264,11 @@ async function loadTanukis() {
       .where('status', '==', 'active')
       .get();
 
-    // 既存のマーカーを削除
+    // 既存のマーカーとクラスタを削除
+    if (markerClusterer) {
+      markerClusterer.clearMarkers();
+      markerClusterer = null;
+    }
     markers.forEach(marker => marker.setMap(null));
     markers = [];
 
@@ -288,6 +293,36 @@ async function loadTanukis() {
       const dateB = b.createdAt?.toDate() || new Date(0);
       return dateB - dateA;
     });
+
+    // マーカークラスタを作成
+    if (markers.length > 0 && typeof MarkerClusterer !== 'undefined') {
+      markerClusterer = new MarkerClusterer({
+        map,
+        markers,
+        renderer: {
+          render: ({ count, position }) => {
+            return new google.maps.Marker({
+              position,
+              icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 20 + Math.min(count, 10) * 2,
+                fillColor: '#8B4513',
+                fillOpacity: 0.9,
+                strokeColor: '#5D2E0C',
+                strokeWeight: 2
+              },
+              label: {
+                text: String(count),
+                color: 'white',
+                fontWeight: 'bold',
+                fontSize: '12px'
+              },
+              zIndex: Number(google.maps.Marker.MAX_ZINDEX) + count
+            });
+          }
+        }
+      });
+    }
 
     hideLoading();
     console.log(`${snapshot.size}個のたぬきを読み込みました`);

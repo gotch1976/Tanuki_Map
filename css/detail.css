@@ -1,5 +1,25 @@
 /* 詳細ページのスタイル */
 
+/* ナビゲーションボタン */
+.nav-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.nav-btn {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  font-size: 1.2rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.nav-btn:hover {
+  background: rgba(255,255,255,0.3);
+}
+
 .detail-container {
   max-width: 800px;
   margin: 0 auto;
