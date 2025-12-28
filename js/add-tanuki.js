@@ -4,6 +4,8 @@ let editingTanukiId = null;
 let editingTanukiData = null;
 let selectedPhoto = null;
 let initialRating = 0; // 投稿時の評価
+let selectedPlaceId = null; // 選択された店舗のPlace ID
+let selectedPlaceName = null; // 選択された店舗名
 
 // 初期化
 function initAddTanuki() {
@@ -55,6 +57,9 @@ function initAddTanuki() {
 
   // 星評価の設定
   setupInitialStarRating();
+
+  // 店舗選択機能
+  setupPlaceSelect();
 }
 
 // 投稿フォームの星評価を設定
@@ -178,6 +183,9 @@ function openModal(tanuki = null) {
     if (isShopCheckbox) {
       isShopCheckbox.checked = false;
     }
+
+    // 店舗選択をリセット
+    clearSelectedPlace();
   }
 
   modal.style.display = 'block';
@@ -227,6 +235,13 @@ function fillForm(tanuki) {
   const isShopCheckbox = document.getElementById('isShopCheckbox');
   if (isShopCheckbox) {
     isShopCheckbox.checked = tanuki.isShop || false;
+  }
+
+  // 店舗情報
+  if (tanuki.placeId && tanuki.placeName) {
+    setSelectedPlace(tanuki.placeId, tanuki.placeName);
+  } else {
+    clearSelectedPlace();
   }
 }
 
@@ -371,6 +386,17 @@ async function handleSubmit(e) {
     const isShopCheckbox = document.getElementById('isShopCheckbox');
     tanukiData.isShop = isShopCheckbox ? isShopCheckbox.checked : false;
 
+    // 店舗情報の取得
+    const placeId = document.getElementById('placeIdInput').value;
+    const placeName = document.getElementById('placeNameInput').value;
+    if (placeId && placeName) {
+      tanukiData.placeId = placeId;
+      tanukiData.placeName = placeName;
+    } else {
+      tanukiData.placeId = null;
+      tanukiData.placeName = null;
+    }
+
     if (editingTanukiId) {
       // 編集時: 投稿者本人の場合のみuserNameを更新可能
       if (currentUser && editingTanukiData && editingTanukiData.userId === currentUser.uid) {
@@ -500,5 +526,128 @@ async function getPrefecture(lat, lng) {
   } catch (error) {
     console.warn('都道府県取得エラー:', error);
     return null; // エラー時はnullを返し、投稿は続行
+  }
+}
+
+// ========== 店舗選択機能（POIクリック方式） ==========
+
+let isPlaceSelectMode = false; // 店舗選択モード
+
+// 店舗選択機能の初期化
+function setupPlaceSelect() {
+  const selectPlaceBtn = document.getElementById('selectPlaceFromMapBtn');
+  const clearPlaceBtn = document.getElementById('clearPlaceBtn');
+
+  if (selectPlaceBtn) {
+    selectPlaceBtn.addEventListener('click', startPlaceSelectMode);
+  }
+
+  if (clearPlaceBtn) {
+    clearPlaceBtn.addEventListener('click', clearSelectedPlace);
+  }
+
+  // 地図のPOIクリックイベントを設定
+  if (map) {
+    map.addListener('click', handleMapClickForPlace);
+  }
+}
+
+// 店舗選択モードを開始
+function startPlaceSelectMode() {
+  isPlaceSelectMode = true;
+
+  // モーダルを一時的に閉じる
+  const modal = document.getElementById('addTanukiModal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+
+  showSuccess('地図上の店舗アイコンをタップしてください');
+}
+
+// 地図クリック時の処理（店舗選択モード）
+function handleMapClickForPlace(event) {
+  if (!isPlaceSelectMode) return;
+
+  // placeIdがある場合は店舗がクリックされた
+  if (event.placeId) {
+    event.stop(); // デフォルトのInfoWindowを表示しない
+
+    // Place Details APIで店舗情報を取得
+    const service = new google.maps.places.PlacesService(map);
+    service.getDetails(
+      {
+        placeId: event.placeId,
+        fields: ['name', 'place_id']
+      },
+      (place, status) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK && place) {
+          setSelectedPlace(place.place_id, place.name);
+          endPlaceSelectMode();
+        } else {
+          showError('店舗情報の取得に失敗しました');
+          endPlaceSelectMode();
+        }
+      }
+    );
+  }
+}
+
+// 店舗選択モードを終了
+function endPlaceSelectMode() {
+  isPlaceSelectMode = false;
+
+  // モーダルを再表示
+  const modal = document.getElementById('addTanukiModal');
+  if (modal) {
+    modal.style.display = 'block';
+  }
+}
+
+// 店舗を選択
+function setSelectedPlace(placeId, placeName) {
+  selectedPlaceId = placeId;
+  selectedPlaceName = placeName;
+
+  // hidden inputに保存
+  const placeIdInput = document.getElementById('placeIdInput');
+  const placeNameInput = document.getElementById('placeNameInput');
+  if (placeIdInput) placeIdInput.value = placeId;
+  if (placeNameInput) placeNameInput.value = placeName;
+
+  // 選択された店舗を表示
+  const selectedPlaceInfo = document.getElementById('selectedPlaceInfo');
+  const selectedPlaceNameSpan = document.getElementById('selectedPlaceName');
+  const selectBtn = document.getElementById('selectPlaceFromMapBtn');
+
+  if (selectedPlaceInfo && selectedPlaceNameSpan) {
+    selectedPlaceNameSpan.textContent = `🏬 ${placeName}`;
+    selectedPlaceInfo.style.display = 'block';
+  }
+  if (selectBtn) {
+    selectBtn.textContent = '🗺️ 別の店舗を選択';
+  }
+
+  showSuccess(`「${placeName}」を選択しました`);
+}
+
+// 店舗選択を解除
+function clearSelectedPlace() {
+  selectedPlaceId = null;
+  selectedPlaceName = null;
+
+  const placeIdInput = document.getElementById('placeIdInput');
+  const placeNameInput = document.getElementById('placeNameInput');
+  if (placeIdInput) placeIdInput.value = '';
+  if (placeNameInput) placeNameInput.value = '';
+
+  const selectedPlaceInfo = document.getElementById('selectedPlaceInfo');
+  const selectBtn = document.getElementById('selectPlaceFromMapBtn');
+
+  if (selectedPlaceInfo) {
+    selectedPlaceInfo.style.display = 'none';
+  }
+  if (selectBtn) {
+    selectBtn.textContent = '🗺️ 地図から店舗を選択';
   }
 }

@@ -108,6 +108,21 @@ header h1 {
   background-color: #c82333;
 }
 
+.btn-small {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: background-color 0.3s;
+}
+
+.btn-small:hover {
+  background-color: #5a6268;
+}
+
 /* モーダル */
 .modal {
   display: none;

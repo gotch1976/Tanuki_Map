@@ -139,6 +139,18 @@ function displayTanukiDetail(tanuki) {
     noteSection.style.display = 'block';
     noteLink.href = tanuki.noteURL;
   }
+
+  // 店舗情報リンク
+  if (tanuki.placeId && tanuki.placeName) {
+    const placeSection = document.getElementById('placeSection');
+    const placeLink = document.getElementById('placeLink');
+    const placeLinkName = document.getElementById('placeLinkName');
+
+    placeSection.style.display = 'block';
+    placeLinkName.textContent = tanuki.placeName;
+    // Google MapsのPlace IDからURLを生成
+    placeLink.href = `https://www.google.com/maps/place/?q=place_id:${tanuki.placeId}`;
+  }
 }
 
 // ミニマップを初期化
@@ -148,7 +160,7 @@ function initMiniMap(latitude, longitude) {
 
   miniMap = new google.maps.Map(document.getElementById('miniMap'), {
     center: { lat: latitude, lng: longitude },
-    zoom: 15
+    zoom: 17 // POIが見やすいようにズームを上げる
   });
 
   // マーカーを追加
@@ -171,13 +183,20 @@ function updateActionButtons(tanuki) {
   auth.onAuthStateChanged(async (user) => {
     const editBtn = document.getElementById('editBtn');
     const deleteBtn = document.getElementById('deleteBtn');
+    const nearbyPlaceSearch = document.getElementById('nearbyPlaceSearch');
 
     if (user && canEdit(tanuki.userId)) {
       if (editBtn) editBtn.style.display = 'inline-block';
       if (deleteBtn) deleteBtn.style.display = 'inline-block';
+      // 店舗が未登録の場合のみ周辺店舗検索を表示
+      if (nearbyPlaceSearch && !tanuki.placeId) {
+        nearbyPlaceSearch.style.display = 'block';
+        setupNearbyPlaceSearch(tanuki);
+      }
     } else {
       if (editBtn) editBtn.style.display = 'none';
       if (deleteBtn) deleteBtn.style.display = 'none';
+      if (nearbyPlaceSearch) nearbyPlaceSearch.style.display = 'none';
     }
 
     // 認証状態が確定してから評価とコメントを読み込み
@@ -670,5 +689,64 @@ async function deleteTanuki() {
     hideLoading();
     console.error('削除エラー:', error);
     showError('削除に失敗しました: ' + error.message);
+  }
+}
+
+// ========== 店舗選択機能（POIクリック方式） ==========
+
+// 店舗選択のセットアップ（ミニマップのPOIクリック）
+function setupNearbyPlaceSearch(tanuki) {
+  if (!miniMap) return;
+
+  // 地図のPOI（店舗アイコン）クリックイベントを設定
+  miniMap.addListener('click', (event) => {
+    if (event.placeId) {
+      event.stop(); // デフォルトのInfoWindowを表示しない
+
+      // Place Details APIで店舗情報を取得
+      const service = new google.maps.places.PlacesService(miniMap);
+      service.getDetails(
+        {
+          placeId: event.placeId,
+          fields: ['name', 'place_id']
+        },
+        async (place, status) => {
+          if (status === google.maps.places.PlacesServiceStatus.OK && place) {
+            await linkPlaceToTanuki(tanuki.id, place.place_id, place.name);
+          } else {
+            showError('店舗情報の取得に失敗しました');
+          }
+        }
+      );
+    }
+  });
+}
+
+// 店舗をたぬきに紐付け
+async function linkPlaceToTanuki(tanukiId, placeId, placeName) {
+  const confirmed = confirm(`「${placeName}」をこのたぬきに紐付けますか？`);
+  if (!confirmed) return;
+
+  try {
+    showLoading('保存中...');
+
+    await db.collection('tanukis').doc(tanukiId).update({
+      placeId: placeId,
+      placeName: placeName,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    hideLoading();
+    showSuccess(`「${placeName}」を紐付けました`);
+
+    // ページをリロードして反映
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
+
+  } catch (error) {
+    hideLoading();
+    console.error('店舗紐付けエラー:', error);
+    showError('店舗の紐付けに失敗しました');
   }
 }
