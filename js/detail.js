@@ -59,8 +59,13 @@ function setupEventListeners() {
 
   // 編集ボタン
   document.getElementById('editBtn')?.addEventListener('click', () => {
-    // index.htmlに戻って編集モーダルを開く
-    window.location.href = `index.html?edit=${currentTanuki.id}`;
+    // index.htmlに戻って編集モーダルを開く（位置情報も保持）
+    if (currentTanuki && currentTanuki.location) {
+      const { latitude, longitude } = currentTanuki.location;
+      window.location.href = `index.html?edit=${currentTanuki.id}&lat=${latitude}&lng=${longitude}`;
+    } else {
+      window.location.href = `index.html?edit=${currentTanuki.id}`;
+    }
   });
 
   // 削除ボタン
@@ -164,17 +169,18 @@ function initMiniMap(latitude, longitude) {
     zoom: 17 // POIが見やすいようにズームを上げる
   });
 
-  // マーカーを追加
+  // マーカーを追加（狸アイコン）
   const marker = new google.maps.Marker({
     position: { lat: latitude, lng: longitude },
     map: miniMap,
     icon: {
-      url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
+      url: 'img/tanuki-marker.png',
+      scaledSize: new google.maps.Size(40, 40)
     }
   });
 
   const infoWindow = new google.maps.InfoWindow({
-    content: '🦝 たぬきの場所'
+    content: '<img src="img/tanuki-marker.png" style="width: 20px; height: 20px; vertical-align: middle;"> たぬきの場所'
   });
   infoWindow.open(miniMap, marker);
 }

@@ -242,6 +242,9 @@ function initMap() {
     });
   }
 
+  // 現在地ボタンを追加
+  addCurrentLocationButton();
+
   // リストビューボタン
   const listViewBtn = document.getElementById('listViewBtn');
   if (listViewBtn) {
@@ -585,4 +588,112 @@ function navigateToNextNewTanuki() {
     currentNewTanukiIndex++;
     showNewTanukiNotification();
   }
+}
+
+// ========== 現在地ボタン ==========
+
+let currentLocationMarker = null; // 現在地マーカー
+
+// 現在地ボタンを地図に追加
+function addCurrentLocationButton() {
+  // ボタン要素を作成
+  const locationButton = document.createElement('button');
+  locationButton.innerHTML = '📍';
+  locationButton.title = '現在地に移動';
+  locationButton.style.cssText = `
+    background-color: #fff;
+    border: none;
+    border-radius: 2px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    cursor: pointer;
+    margin: 10px;
+    padding: 0;
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  `;
+
+  // ホバー効果
+  locationButton.addEventListener('mouseenter', () => {
+    locationButton.style.backgroundColor = '#f5f5f5';
+  });
+  locationButton.addEventListener('mouseleave', () => {
+    locationButton.style.backgroundColor = '#fff';
+  });
+
+  // クリック時の処理
+  locationButton.addEventListener('click', () => {
+    goToCurrentLocation();
+  });
+
+  // 地図の右下に配置
+  map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(locationButton);
+}
+
+// 現在地に移動
+function goToCurrentLocation() {
+  if (!navigator.geolocation) {
+    showError('お使いのブラウザは位置情報に対応していません');
+    return;
+  }
+
+  showLoading('現在地を取得中...');
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      hideLoading();
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+
+      // 地図を現在地に移動
+      map.setCenter({ lat, lng });
+      map.setZoom(15);
+
+      // 既存の現在地マーカーを削除
+      if (currentLocationMarker) {
+        currentLocationMarker.setMap(null);
+      }
+
+      // 現在地にマーカーを表示
+      currentLocationMarker = new google.maps.Marker({
+        position: { lat, lng },
+        map: map,
+        icon: {
+          url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+        }
+      });
+
+      const infoWindow = new google.maps.InfoWindow({
+        content: '📍 現在地'
+      });
+      infoWindow.open(map, currentLocationMarker);
+
+      showSuccess('現在地に移動しました');
+    },
+    (error) => {
+      hideLoading();
+      console.error('現在地取得エラー:', error);
+      switch (error.code) {
+        case error.PERMISSION_DENIED:
+          showError('位置情報の取得が許可されていません');
+          break;
+        case error.POSITION_UNAVAILABLE:
+          showError('位置情報を取得できませんでした');
+          break;
+        case error.TIMEOUT:
+          showError('位置情報の取得がタイムアウトしました');
+          break;
+        default:
+          showError('位置情報の取得に失敗しました');
+      }
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    }
+  );
 }
