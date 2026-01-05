@@ -148,8 +148,9 @@ function displayTanukiDetail(tanuki) {
 
     placeSection.style.display = 'block';
     placeLinkName.textContent = tanuki.placeName;
-    // Google MapsのPlace IDからURLを生成
-    placeLink.href = `https://www.google.com/maps/place/?q=place_id:${tanuki.placeId}`;
+    // Google MapsのPlace IDからURLを生成（api=1必須、query_place_idを使用）
+    const encodedName = encodeURIComponent(tanuki.placeName);
+    placeLink.href = `https://www.google.com/maps/search/?api=1&query=${encodedName}&query_place_id=${tanuki.placeId}`;
   }
 }
 
@@ -714,7 +715,7 @@ function setupNearbyPlaceSearch(tanuki) {
           if (status === google.maps.places.PlacesServiceStatus.OK && place) {
             await linkPlaceToTanuki(tanuki.id, place.place_id, place.name);
           } else {
-            showError('店舗情報の取得に失敗しました');
+            showError('施設／店舗情報の取得に失敗しました');
           }
         }
       );
@@ -747,6 +748,6 @@ async function linkPlaceToTanuki(tanukiId, placeId, placeName) {
   } catch (error) {
     hideLoading();
     console.error('店舗紐付けエラー:', error);
-    showError('店舗の紐付けに失敗しました');
+    showError('施設／店舗の紐付けに失敗しました');
   }
 }

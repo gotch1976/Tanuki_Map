@@ -114,13 +114,18 @@
         </div>
 
         <div class="form-group" id="placeSelectGroup">
-          <label>🏬 店舗情報（オプション）</label>
+          <label>🏬 施設／店舗情報（オプション）</label>
           <div id="selectedPlaceInfo" style="display: none; padding: 10px; background: #f5f5f5; border-radius: 8px; margin-bottom: 10px;">
             <span id="selectedPlaceName"></span>
             <button type="button" id="clearPlaceBtn" class="btn-small" style="margin-left: 10px;">✕ 解除</button>
           </div>
-          <button type="button" id="selectPlaceFromMapBtn" class="btn-secondary">🗺️ 地図から店舗を選択</button>
-          <small>地図上の店舗アイコン（デニーズ等）をタップして選択できます</small>
+          <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+            <input type="text" id="placeSearchInput" placeholder="施設／店舗名を入力" style="flex: 1;">
+            <button type="button" id="searchPlaceBtn" class="btn-secondary" style="white-space: nowrap;">🔍 検索</button>
+          </div>
+          <div id="placeSearchResults" style="display: none; max-height: 150px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px;"></div>
+          <button type="button" id="selectPlaceFromMapBtn" class="btn-secondary" style="margin-top: 8px;">🗺️ 地図から施設／店舗を選択</button>
+          <small>地図にPOIがない場合は施設／店舗名で検索してください</small>
           <input type="hidden" id="placeIdInput">
           <input type="hidden" id="placeNameInput">
         </div>

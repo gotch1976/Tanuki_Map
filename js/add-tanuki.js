@@ -535,8 +535,14 @@ let isPlaceSelectMode = false; // 店舗選択モード
 
 // 店舗選択機能の初期化
 function setupPlaceSelect() {
+  console.log('setupPlaceSelect() 開始');
   const selectPlaceBtn = document.getElementById('selectPlaceFromMapBtn');
   const clearPlaceBtn = document.getElementById('clearPlaceBtn');
+  const searchPlaceBtn = document.getElementById('searchPlaceBtn');
+  const placeSearchInput = document.getElementById('placeSearchInput');
+
+  console.log('searchPlaceBtn:', searchPlaceBtn);
+  console.log('placeSearchInput:', placeSearchInput);
 
   if (selectPlaceBtn) {
     selectPlaceBtn.addEventListener('click', startPlaceSelectMode);
@@ -546,10 +552,91 @@ function setupPlaceSelect() {
     clearPlaceBtn.addEventListener('click', clearSelectedPlace);
   }
 
+  // 店舗名検索ボタン
+  if (searchPlaceBtn) {
+    console.log('検索ボタンにイベントリスナー追加');
+    searchPlaceBtn.addEventListener('click', () => {
+      console.log('検索ボタンクリック');
+      searchPlaceByName();
+    });
+  }
+
+  // Enterキーで検索
+  if (placeSearchInput) {
+    placeSearchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        searchPlaceByName();
+      }
+    });
+  }
+
   // 地図のPOIクリックイベントを設定
   if (map) {
     map.addListener('click', handleMapClickForPlace);
   }
+}
+
+// 店舗名で検索
+function searchPlaceByName() {
+  const searchInput = document.getElementById('placeSearchInput');
+  const resultsDiv = document.getElementById('placeSearchResults');
+  const query = searchInput.value.trim();
+
+  if (!query) {
+    showError('施設／店舗名を入力してください');
+    return;
+  }
+
+  // たぬきの位置を取得
+  const lat = parseFloat(document.getElementById('latitudeInput').value);
+  const lng = parseFloat(document.getElementById('longitudeInput').value);
+
+  if (isNaN(lat) || isNaN(lng)) {
+    showError('先に位置情報を設定してください');
+    return;
+  }
+
+  showLoading('検索中...');
+
+  const service = new google.maps.places.PlacesService(map);
+  const request = {
+    query: query,
+    location: new google.maps.LatLng(lat, lng),
+    radius: 1000 // 1km以内
+  };
+
+  service.textSearch(request, (results, status) => {
+    hideLoading();
+
+    if (status === google.maps.places.PlacesServiceStatus.OK && results.length > 0) {
+      displayPlaceSearchResults(results.slice(0, 5)); // 最大5件
+    } else {
+      resultsDiv.style.display = 'block';
+      resultsDiv.innerHTML = '<p style="padding: 10px; color: #666;">施設／店舗が見つかりませんでした</p>';
+    }
+  });
+}
+
+// 検索結果を表示
+function displayPlaceSearchResults(places) {
+  const resultsDiv = document.getElementById('placeSearchResults');
+  resultsDiv.style.display = 'block';
+  resultsDiv.innerHTML = places.map(place => `
+    <div class="place-result-item" style="padding: 10px; border-bottom: 1px solid #eee; cursor: pointer;"
+         onclick="selectPlaceFromSearch('${place.place_id}', '${place.name.replace(/'/g, "\\'")}')">
+      <strong>${place.name}</strong>
+      <br><small style="color: #666;">${place.formatted_address || ''}</small>
+    </div>
+  `).join('');
+}
+
+// 検索結果から店舗を選択
+function selectPlaceFromSearch(placeId, placeName) {
+  setSelectedPlace(placeId, placeName);
+  // 検索結果を非表示
+  document.getElementById('placeSearchResults').style.display = 'none';
+  document.getElementById('placeSearchInput').value = '';
 }
 
 // 店舗選択モードを開始
@@ -562,12 +649,23 @@ function startPlaceSelectMode() {
     modal.style.display = 'none';
   }
 
-  showSuccess('地図上の店舗アイコンをタップしてください');
+  // たぬきの位置に地図を移動（POIが見やすいようにズーム）
+  const lat = parseFloat(document.getElementById('latitudeInput').value);
+  const lng = parseFloat(document.getElementById('longitudeInput').value);
+  if (!isNaN(lat) && !isNaN(lng) && map) {
+    map.setCenter({ lat, lng });
+    map.setZoom(17); // POIが見やすいズームレベル
+  }
+
+  showSuccess('地図上の施設／店舗アイコンをタップしてください');
 }
 
 // 地図クリック時の処理（店舗選択モード）
 function handleMapClickForPlace(event) {
   if (!isPlaceSelectMode) return;
+
+  console.log('店舗選択モード: クリックイベント', event);
+  console.log('placeId:', event.placeId);
 
   // placeIdがある場合は店舗がクリックされた
   if (event.placeId) {
@@ -581,15 +679,20 @@ function handleMapClickForPlace(event) {
         fields: ['name', 'place_id']
       },
       (place, status) => {
+        console.log('Places API response:', status, place);
         if (status === google.maps.places.PlacesServiceStatus.OK && place) {
           setSelectedPlace(place.place_id, place.name);
           endPlaceSelectMode();
         } else {
-          showError('店舗情報の取得に失敗しました');
+          console.error('Places API error:', status);
+          showError('施設／店舗情報の取得に失敗しました: ' + status);
           endPlaceSelectMode();
         }
       }
     );
+  } else {
+    // POI以外の場所をタップした場合
+    showSuccess('施設／店舗アイコンをタップしてください（空白地点はスキップ）');
   }
 }
 
@@ -625,7 +728,7 @@ function setSelectedPlace(placeId, placeName) {
     selectedPlaceInfo.style.display = 'block';
   }
   if (selectBtn) {
-    selectBtn.textContent = '🗺️ 別の店舗を選択';
+    selectBtn.textContent = '🗺️ 別の施設／店舗を選択';
   }
 
   showSuccess(`「${placeName}」を選択しました`);
@@ -648,6 +751,6 @@ function clearSelectedPlace() {
     selectedPlaceInfo.style.display = 'none';
   }
   if (selectBtn) {
-    selectBtn.textContent = '🗺️ 地図から店舗を選択';
+    selectBtn.textContent = '🗺️ 地図から施設／店舗を選択';
   }
 }

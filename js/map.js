@@ -31,7 +31,21 @@ function initMap() {
         lat: DEFAULT_MAP_CENTER.lat,
         lng: DEFAULT_MAP_CENTER.lng
       },
-      zoom: DEFAULT_MAP_ZOOM
+      zoom: DEFAULT_MAP_ZOOM,
+      // POI（店舗アイコン）を全て表示し、クリック可能にする
+      clickableIcons: true,
+      styles: [
+        {
+          featureType: 'poi',
+          elementType: 'labels',
+          stylers: [{ visibility: 'on' }]
+        },
+        {
+          featureType: 'poi.business',
+          elementType: 'labels',
+          stylers: [{ visibility: 'on' }]
+        }
+      ]
     });
     console.log('地図作成成功:', map);
   } catch (error) {
@@ -79,6 +93,9 @@ function initMap() {
   // 位置選択時の共通処理
   function handleLocationSelect(lat, lng) {
     if (!currentUser) return;
+
+    // 店舗選択モード中はたぬきピン設置をスキップ
+    if (typeof isPlaceSelectMode !== 'undefined' && isPlaceSelectMode) return;
 
     selectedLocation = { lat, lng };
     console.log('選択した位置:', selectedLocation);
@@ -151,6 +168,9 @@ function initMap() {
       wasCancelled = false;
 
       if (!currentUser) return;
+
+      // 店舗選択モード中は長押しタイマーを開始しない
+      if (typeof isPlaceSelectMode !== 'undefined' && isPlaceSelectMode) return;
 
       // 2本指以上の場合はキャンセル（ピンチズーム対策）
       if (currentTouchCount !== 1) {
