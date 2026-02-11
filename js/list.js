@@ -3,7 +3,14 @@
 // グローバル変数
 let allTanukis = [];
 let tanukiRatings = {}; // tanukiId -> { avg, count }
+let userRatedTanukis = new Set(); // ユーザーが評価済みのたぬきID
 let isListAdmin = false; // 管理者フラグ
+
+// ページネーション設定
+const ITEMS_PER_PAGE = 100;
+let currentPage = 1;
+let sortedTanukis = []; // ソート済みデータ（ページング用）
+let ratingsLoaded = false; // 評価読み込み済みフラグ
 
 // 都道府県の地域順マッピング（北から南へ）
 const PREFECTURE_ORDER = {
@@ -118,10 +125,10 @@ async function loadTanukiList() {
     console.log('取得件数:', allTanukis.length, 'ユニークID数:', seenIds.size);
     tanukiCount.textContent = `${allTanukis.length}件のたぬき`;
 
-    // 評価を取得（並行処理）
-    await loadAllRatings();
+    // 評価は詳細ページで取得するため、リスト表示時は取得しない（パフォーマンス改善）
 
     // 初期表示（日付順）
+    currentPage = 1;
     sortAndDisplayTanukis('date');
 
     hideLoading();
@@ -135,6 +142,8 @@ async function loadTanukiList() {
 
 // 全たぬきの評価を取得
 async function loadAllRatings() {
+  const currentUserId = firebase.auth().currentUser?.uid;
+
   const promises = allTanukis.map(async (tanuki) => {
     try {
       const ratingsSnapshot = await db.collection('tanukis')
@@ -142,7 +151,13 @@ async function loadAllRatings() {
 
       if (ratingsSnapshot.size > 0) {
         let total = 0;
-        ratingsSnapshot.forEach(doc => total += doc.data().rating);
+        ratingsSnapshot.forEach(doc => {
+          total += doc.data().rating;
+          // ユーザーが評価済みかチェック
+          if (currentUserId && doc.id === currentUserId) {
+            userRatedTanukis.add(tanuki.id);
+          }
+        });
         tanukiRatings[tanuki.id] = {
           avg: total / ratingsSnapshot.size,
           count: ratingsSnapshot.size
@@ -160,13 +175,21 @@ async function loadAllRatings() {
 }
 
 // ソートして表示
-function sortAndDisplayTanukis(sortType) {
-  let sorted = [...allTanukis];
+async function sortAndDisplayTanukis(sortType) {
+  // 評価順・未評価順の場合、評価データが必要
+  if ((sortType === 'rating' || sortType === 'unrated') && !ratingsLoaded) {
+    showLoading('評価データを読み込み中...');
+    await loadAllRatings();
+    ratingsLoaded = true;
+    hideLoading();
+  }
+
+  sortedTanukis = [...allTanukis];
 
   switch (sortType) {
     case 'date':
       // 日付順（新しい順）
-      sorted.sort((a, b) => {
+      sortedTanukis.sort((a, b) => {
         const dateA = a.createdAt?.toDate() || new Date(0);
         const dateB = b.createdAt?.toDate() || new Date(0);
         return dateB - dateA;
@@ -175,7 +198,7 @@ function sortAndDisplayTanukis(sortType) {
 
     case 'prefecture':
       // 都道府県別（地域順：北から南へ）
-      sorted.sort((a, b) => {
+      sortedTanukis.sort((a, b) => {
         const prefA = a.prefecture || '不明';
         const prefB = b.prefecture || '不明';
         const orderA = PREFECTURE_ORDER[prefA] || 98; // 海外など未定義は98
@@ -186,7 +209,7 @@ function sortAndDisplayTanukis(sortType) {
 
     case 'rating':
       // 評価順（高い順、同評価なら評価数が多い順、未評価は最後）
-      sorted.sort((a, b) => {
+      sortedTanukis.sort((a, b) => {
         const ratingA = tanukiRatings[a.id] || { avg: 0, count: 0 };
         const ratingB = tanukiRatings[b.id] || { avg: 0, count: 0 };
         // まず評価で比較、同じなら評価数で比較
@@ -196,14 +219,91 @@ function sortAndDisplayTanukis(sortType) {
         return ratingB.count - ratingA.count;
       });
       break;
+
+    case 'unrated':
+      // 未評価順（自分が未評価のものを先に、古い順）
+      sortedTanukis.sort((a, b) => {
+        const aRated = userRatedTanukis.has(a.id);
+        const bRated = userRatedTanukis.has(b.id);
+        // 未評価を先に
+        if (aRated !== bRated) {
+          return aRated ? 1 : -1;
+        }
+        // 同じ評価状態なら古い順
+        const dateA = a.createdAt?.toDate() || new Date(0);
+        const dateB = b.createdAt?.toDate() || new Date(0);
+        return dateA - dateB;
+      });
+      break;
   }
 
-  // 表示
+  // ソート変更時は1ページ目に戻る
+  currentPage = 1;
+  displayCurrentPage();
+}
+
+// 現在のページを表示
+function displayCurrentPage() {
   const tanukiList = document.getElementById('tanukiList');
+  const totalPages = Math.ceil(sortedTanukis.length / ITEMS_PER_PAGE);
+
+  // ページ範囲を計算
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, sortedTanukis.length);
+  const pageItems = sortedTanukis.slice(startIndex, endIndex);
+
+  // リストを描画
   tanukiList.innerHTML = '';
-  sorted.forEach(tanuki => {
+  pageItems.forEach(tanuki => {
     tanukiList.appendChild(createTanukiCard(tanuki));
   });
+
+  // ページネーションUIを更新
+  updatePaginationUI(totalPages, startIndex + 1, endIndex);
+}
+
+// ページネーションUIを更新
+function updatePaginationUI(totalPages, startItem, endItem) {
+  let paginationEl = document.getElementById('pagination');
+
+  // ページネーション要素がなければ作成
+  if (!paginationEl) {
+    paginationEl = document.createElement('div');
+    paginationEl.id = 'pagination';
+    paginationEl.className = 'pagination';
+    document.getElementById('tanukiList').after(paginationEl);
+  }
+
+  // 1ページしかない場合は非表示
+  if (totalPages <= 1) {
+    paginationEl.style.display = 'none';
+    return;
+  }
+
+  paginationEl.style.display = 'flex';
+  paginationEl.innerHTML = `
+    <button class="pagination-btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+      ← 前へ
+    </button>
+    <span class="pagination-info">
+      ${startItem}-${endItem} / ${sortedTanukis.length}件（${currentPage}/${totalPages}ページ）
+    </span>
+    <button class="pagination-btn" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
+      次へ →
+    </button>
+  `;
+}
+
+// 指定ページに移動
+function goToPage(page) {
+  const totalPages = Math.ceil(sortedTanukis.length / ITEMS_PER_PAGE);
+  if (page < 1 || page > totalPages) return;
+
+  currentPage = page;
+  displayCurrentPage();
+
+  // ページ上部にスクロール
+  document.querySelector('.list-container')?.scrollIntoView({ behavior: 'smooth' });
 }
 
 // たぬきリスト行を作成（シンプル版）
@@ -221,11 +321,15 @@ function createTanukiCard(tanuki) {
     ? tanuki.episode.substring(0, 50) + '...'
     : tanuki.episode;
 
-  // 評価表示
+  // 評価表示（評価順ソート時のみ評価を表示）
   const rating = tanukiRatings[tanuki.id];
   const ratingText = rating && rating.count > 0
     ? `${rating.avg.toFixed(1)} (${rating.count})`
     : '-';
+
+  // 評価済みチェック（評価読み込み済みの場合のみ）
+  const isRated = ratingsLoaded && userRatedTanukis.has(tanuki.id);
+  const ratedMark = isRated ? '<span class="rated-check">✓</span>' : '<span class="rated-check"></span>';
 
   // 都道府県表示
   const prefectureText = tanuki.prefecture || '未設定';
@@ -238,7 +342,7 @@ function createTanukiCard(tanuki) {
   row.innerHTML = `
     <span class="row-shop">${tanuki.isShop ? '🛒' : ''}</span>
     <span class="row-prefecture">📍 ${prefectureText}</span>
-    <span class="row-rating">⭐ ${ratingText}</span>
+    <span class="row-rating">${ratedMark} ⭐ ${ratingText}</span>
     <span class="row-episode">${episodePreview}</span>
     ${deleteBtn}
   `;
