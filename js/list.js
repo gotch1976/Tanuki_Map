@@ -125,7 +125,9 @@ async function loadTanukiList() {
     console.log('取得件数:', allTanukis.length, 'ユニークID数:', seenIds.size);
     tanukiCount.textContent = `${allTanukis.length}件のたぬき`;
 
-    // 評価は詳細ページで取得するため、リスト表示時は取得しない（パフォーマンス改善）
+    // 評価を取得（並行処理）
+    await loadAllRatings();
+    ratingsLoaded = true;
 
     // 初期表示（日付順）
     currentPage = 1;
