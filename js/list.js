@@ -313,8 +313,10 @@ function createTanukiCard(tanuki) {
   const row = document.createElement('div');
   row.className = 'tanuki-row';
 
-  // クリックで詳細ページに遷移
+  // クリックで詳細ページに遷移（ソート済みIDリストをsessionStorageに保存）
   row.onclick = () => {
+    const idList = sortedTanukis.map(t => t.id);
+    sessionStorage.setItem('tanukiList', JSON.stringify(idList));
     window.location.href = `detail.html?id=${tanuki.id}&from=list`;
   };
 

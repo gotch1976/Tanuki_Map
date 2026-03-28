@@ -66,6 +66,37 @@ service cloud.firestore {
 
         // 削除は管理者のみ
         allow delete: if request.auth != null && isAdmin();
+
+        // いいねサブコレクション
+        match /likes/{likeId} {
+          // 誰でも閲覧可能
+          allow read: if true;
+
+          // 作成条件（自分のIDでのみ作成可能、1人1回）
+          allow create: if request.auth != null
+                        && likeId == request.auth.uid
+                        && request.resource.data.userId == request.auth.uid;
+
+          // 削除は本人のみ可能
+          allow delete: if request.auth != null
+                        && likeId == request.auth.uid;
+        }
+
+        // 返信サブコレクション
+        match /replies/{replyId} {
+          // 誰でも閲覧可能
+          allow read: if true;
+
+          // ログインユーザー（匿名含む）のみ作成可能
+          allow create: if request.auth != null
+                        && request.resource.data.userId == request.auth.uid
+                        && request.resource.data.text is string
+                        && request.resource.data.text.size() > 0
+                        && request.resource.data.text.size() <= 300;
+
+          // 削除は管理者のみ
+          allow delete: if request.auth != null && isAdmin();
+        }
       }
     }
 

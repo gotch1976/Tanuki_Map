@@ -16,6 +16,9 @@
       <div class="nav-buttons">
         <button id="backBtn" class="nav-btn" title="マップに戻る">🗺️</button>
         <button id="listBackBtn" class="nav-btn" style="display: none;" title="リストに戻る">📋</button>
+        <button id="prevBtn" class="nav-btn nav-prev-next" style="display: none;" title="前のたぬき">◀</button>
+        <button id="nextBtn" class="nav-btn nav-prev-next" style="display: none;" title="次のたぬき">▶</button>
+        <span id="navPosition" class="nav-position" style="display: none;"></span>
       </div>
       <h1><img src="img/tanuki-marker.png" alt="たぬき" style="width: 28px; height: 28px; vertical-align: middle;"> たぬき詳細</h1>
       <div id="userInfo" style="display: none;">
@@ -34,10 +37,10 @@
 
       <!-- 情報 -->
       <div class="info-section">
-        <h2>📖 エピソード</h2>
+        <h2>📍 場所（タイトル）</h2>
         <p id="episode"></p>
 
-        <h3>📍 場所</h3>
+        <h3>🗺️ マップ</h3>
         <p id="location"></p>
         <div id="miniMap" style="height: 200px; margin: 10px 0;"></div>
         <!-- 店舗選択（編集権限がある場合のみ表示） -->
@@ -45,7 +48,7 @@
           <p id="placeSelectHint" style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">👆 地図上の施設／店舗アイコン（デニーズ等）をタップして紐付けできます</p>
         </div>
 
-        <h3>🎨 特徴</h3>
+        <h3>📖 特徴／エピソード</h3>
         <p id="characteristics">-</p>
 
         <h3>📅 発見日</h3>

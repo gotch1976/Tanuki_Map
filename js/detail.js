@@ -57,6 +57,9 @@ function setupEventListeners() {
     });
   }
 
+  // 前/次ナビゲーション（リストから来た場合のみ）
+  setupPrevNextNavigation();
+
   // 編集ボタン
   document.getElementById('editBtn')?.addEventListener('click', () => {
     // index.htmlに戻って編集モーダルを開く（位置情報も保持）
@@ -480,10 +483,35 @@ async function loadComments(tanukiId) {
       .get();
 
     const comments = [];
+    const commentPromises = [];
+
     commentsSnapshot.forEach(doc => {
-      comments.push({ id: doc.id, ...doc.data() });
+      const comment = { id: doc.id, ...doc.data() };
+      comments.push(comment);
+
+      // いいねと返信を並行で取得
+      const likesPromise = db.collection('tanukis')
+        .doc(tanukiId).collection('comments').doc(doc.id)
+        .collection('likes').get()
+        .then(likesSnapshot => {
+          comment.likeCount = likesSnapshot.size;
+          comment.userLiked = currentUser && likesSnapshot.docs.some(d => d.id === currentUser.uid);
+        });
+
+      const repliesPromise = db.collection('tanukis')
+        .doc(tanukiId).collection('comments').doc(doc.id)
+        .collection('replies').orderBy('createdAt', 'asc').get()
+        .then(repliesSnapshot => {
+          comment.replies = [];
+          repliesSnapshot.forEach(replyDoc => {
+            comment.replies.push({ id: replyDoc.id, ...replyDoc.data() });
+          });
+        });
+
+      commentPromises.push(likesPromise, repliesPromise);
     });
 
+    await Promise.all(commentPromises);
     displayComments(comments);
   } catch (error) {
     console.error('コメント読み込みエラー:', error);
@@ -506,6 +534,24 @@ function displayComments(comments) {
     // 削除は管理者のみ
     const canDelete = isCurrentUserAdmin();
     const dateStr = comment.createdAt ? formatDate(comment.createdAt) : '';
+    const likeCount = comment.likeCount || 0;
+    const userLiked = comment.userLiked || false;
+    const likeClass = userLiked ? 'liked' : '';
+    const replies = comment.replies || [];
+
+    // 返信のHTML
+    const repliesHtml = replies.map(reply => {
+      const replyDateStr = reply.createdAt ? formatDate(reply.createdAt) : '';
+      return `
+        <div class="reply-item">
+          <div class="reply-header">
+            <span class="reply-user">${escapeHtml(reply.userName)}</span>
+            <span class="reply-date">${replyDateStr}</span>
+          </div>
+          <div class="reply-text">${linkify(escapeHtml(reply.text))}</div>
+        </div>
+      `;
+    }).join('');
 
     return `
       <div class="comment-item" data-comment-id="${comment.id}">
@@ -513,12 +559,23 @@ function displayComments(comments) {
           <span class="comment-user">${escapeHtml(comment.userName)}</span>
           <span class="comment-date">${dateStr}</span>
         </div>
-        <div class="comment-text">${escapeHtml(comment.text)}</div>
-        ${canDelete ? `
-          <div class="comment-actions">
-            <button class="comment-delete-btn" onclick="deleteComment('${comment.id}')">削除</button>
+        <div class="comment-text">${linkify(escapeHtml(comment.text))}</div>
+        <div class="comment-footer">
+          <button class="like-btn ${likeClass}" onclick="toggleLike('${comment.id}')">
+            <span class="like-icon">${userLiked ? '❤️' : '🤍'}</span>
+            <span class="like-count">${likeCount > 0 ? likeCount : ''}</span>
+          </button>
+          ${currentUser ? `<button class="reply-btn" onclick="showReplyForm('${comment.id}')">返信</button>` : ''}
+          ${canDelete ? `<button class="comment-delete-btn" onclick="deleteComment('${comment.id}')">削除</button>` : ''}
+        </div>
+        <div class="reply-form-container" id="replyForm-${comment.id}" style="display: none;">
+          <textarea class="reply-input" id="replyInput-${comment.id}" placeholder="返信を入力..." maxlength="300"></textarea>
+          <div class="reply-form-actions">
+            <button class="btn-secondary btn-small" onclick="hideReplyForm('${comment.id}')">キャンセル</button>
+            <button class="btn-primary btn-small" onclick="submitReply('${comment.id}')">返信する</button>
           </div>
-        ` : ''}
+        </div>
+        ${replies.length > 0 ? `<div class="replies-list">${repliesHtml}</div>` : ''}
       </div>
     `;
   }).join('');
@@ -529,6 +586,12 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+// URLをリンクに変換
+function linkify(text) {
+  const urlPattern = /(https?:\/\/[^\s<]+)/g;
+  return text.replace(urlPattern, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
 }
 
 // コメントUIを更新（ログイン状態に応じて表示切り替え）
@@ -650,6 +713,95 @@ async function deleteComment(commentId) {
   }
 }
 
+// いいねをトグル
+async function toggleLike(commentId) {
+  if (!currentUser || !currentTanuki) {
+    showError('いいねするにはログインが必要です');
+    return;
+  }
+
+  try {
+    const likeRef = db.collection('tanukis').doc(currentTanuki.id)
+      .collection('comments').doc(commentId)
+      .collection('likes').doc(currentUser.uid);
+
+    const likeDoc = await likeRef.get();
+
+    if (likeDoc.exists) {
+      // いいね解除
+      await likeRef.delete();
+    } else {
+      // いいね追加
+      await likeRef.set({
+        userId: currentUser.uid,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+
+    // コメント再読み込み
+    await loadComments(currentTanuki.id);
+  } catch (error) {
+    console.error('いいねエラー:', error);
+    showError('いいねに失敗しました');
+  }
+}
+
+// 返信フォームを表示
+function showReplyForm(commentId) {
+  const form = document.getElementById(`replyForm-${commentId}`);
+  if (form) {
+    form.style.display = 'block';
+    document.getElementById(`replyInput-${commentId}`).focus();
+  }
+}
+
+// 返信フォームを非表示
+function hideReplyForm(commentId) {
+  const form = document.getElementById(`replyForm-${commentId}`);
+  if (form) {
+    form.style.display = 'none';
+    document.getElementById(`replyInput-${commentId}`).value = '';
+  }
+}
+
+// 返信を送信
+async function submitReply(commentId) {
+  if (!currentUser || !currentTanuki) return;
+
+  const replyInput = document.getElementById(`replyInput-${commentId}`);
+  const text = replyInput.value.trim();
+
+  if (!text) {
+    showError('返信を入力してください');
+    return;
+  }
+
+  if (text.length > 300) {
+    showError('返信は300文字以内で入力してください');
+    return;
+  }
+
+  try {
+    await db.collection('tanukis').doc(currentTanuki.id)
+      .collection('comments').doc(commentId)
+      .collection('replies').add({
+        userId: currentUser.uid,
+        userName: getDisplayName(),
+        text: text,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+    hideReplyForm(commentId);
+    showSuccess('返信しました');
+
+    // コメント再読み込み
+    await loadComments(currentTanuki.id);
+  } catch (error) {
+    console.error('返信エラー:', error);
+    showError('返信に失敗しました');
+  }
+}
+
 // ========== たぬき削除 ==========
 
 // たぬきを削除
@@ -696,6 +848,54 @@ async function deleteTanuki() {
     hideLoading();
     console.error('削除エラー:', error);
     showError('削除に失敗しました: ' + error.message);
+  }
+}
+
+// ========== 前/次ナビゲーション ==========
+
+function setupPrevNextNavigation() {
+  const tanukiId = getUrlParameter('id');
+  const listJson = sessionStorage.getItem('tanukiList');
+  if (!listJson || !tanukiId) return;
+
+  try {
+    const idList = JSON.parse(listJson);
+    const currentIndex = idList.indexOf(tanukiId);
+    if (currentIndex === -1) return;
+
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const navPosition = document.getElementById('navPosition');
+
+    // 位置表示
+    if (navPosition) {
+      navPosition.style.display = 'inline-block';
+      navPosition.textContent = `${currentIndex + 1}/${idList.length}`;
+    }
+
+    // 前ボタン
+    if (prevBtn) {
+      prevBtn.style.display = 'inline-block';
+      prevBtn.disabled = currentIndex === 0;
+      prevBtn.addEventListener('click', () => {
+        if (currentIndex > 0) {
+          window.location.href = `detail.html?id=${idList[currentIndex - 1]}&from=list`;
+        }
+      });
+    }
+
+    // 次ボタン
+    if (nextBtn) {
+      nextBtn.style.display = 'inline-block';
+      nextBtn.disabled = currentIndex === idList.length - 1;
+      nextBtn.addEventListener('click', () => {
+        if (currentIndex < idList.length - 1) {
+          window.location.href = `detail.html?id=${idList[currentIndex + 1]}&from=list`;
+        }
+      });
+    }
+  } catch (e) {
+    console.warn('ナビゲーションリスト読み込みエラー:', e);
   }
 }
 
