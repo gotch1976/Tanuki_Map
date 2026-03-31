@@ -40,9 +40,11 @@ header {
 
 .header-left {
   display: flex;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 0.5rem;
   min-width: 0;
+  overflow: hidden;
 }
 
 .header-nav {
@@ -55,6 +57,7 @@ header h1 {
   font-size: 1.1rem;
   font-weight: bold;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .header-actions {
