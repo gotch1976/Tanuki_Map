@@ -13,7 +13,10 @@
   <!-- ヘッダー -->
   <header>
     <div class="header-container">
-      <button id="backBtn" class="btn-secondary">← 地図に戻る</button>
+      <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <button id="backBtn" class="btn-secondary">&larr; 地図に戻る</button>
+        <button id="mypageBtn" class="icon-btn" title="マイページ" style="display: none;">👤</button>
+      </div>
       <h1><img src="img/tanuki-marker.png" alt="たぬき" style="width: 28px; height: 28px; vertical-align: middle;"> たぬきリスト</h1>
       <div id="userInfo" style="display: none;">
         <img id="userPhoto" alt="User" class="user-photo">
@@ -34,6 +37,7 @@
             <option value="prefecture">都道府県別</option>
             <option value="rating">評価順</option>
             <option value="unrated">未評価リスト</option>
+            <option value="mine">自分の投稿</option>
           </select>
         </div>
       </div>

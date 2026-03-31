@@ -78,6 +78,11 @@ function setupEventListeners() {
     window.location.href = 'index.html';
   });
 
+  // マイページボタン
+  document.getElementById('mypageBtn')?.addEventListener('click', () => {
+    window.location.href = 'mypage.html';
+  });
+
   // ソート変更
   document.getElementById('sortSelect')?.addEventListener('change', (e) => {
     sortAndDisplayTanukis(e.target.value);
@@ -236,6 +241,21 @@ async function sortAndDisplayTanukis(sortType) {
         const dateB = b.createdAt?.toDate() || new Date(0);
         return dateA - dateB;
       });
+      break;
+
+    case 'mine':
+      // 自分の投稿のみ（新しい順）
+      const currentUserId = firebase.auth().currentUser?.uid;
+      if (currentUserId) {
+        sortedTanukis = sortedTanukis.filter(t => t.userId === currentUserId);
+        sortedTanukis.sort((a, b) => {
+          const dateA = a.createdAt?.toDate() || new Date(0);
+          const dateB = b.createdAt?.toDate() || new Date(0);
+          return dateB - dateA;
+        });
+      } else {
+        sortedTanukis = [];
+      }
       break;
   }
 

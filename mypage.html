@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>マイページ | Tanuki Map</title>
+
+  <!-- カスタムCSS -->
+  <link rel="stylesheet" href="css/main.css?v=26">
+  <link rel="stylesheet" href="css/list.css?v=26">
+  <link rel="stylesheet" href="css/mypage.css?v=26">
+</head>
+<body>
+  <!-- ヘッダー -->
+  <header>
+    <div class="header-container">
+      <button id="backBtn" class="btn-secondary">&larr; 地図に戻る</button>
+      <h1><img src="img/tanuki-marker.png" alt="たぬき" style="width: 28px; height: 28px; vertical-align: middle;"> マイページ</h1>
+      <div id="userInfo" style="display: none;">
+        <img id="userPhoto" alt="User" class="user-photo">
+        <span id="userName"></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- コンテンツ -->
+  <div class="list-container">
+    <!-- ログイン促進（未ログイン時） -->
+    <div id="loginPrompt" class="login-prompt-box" style="display: none;">
+      <p>マイページを利用するにはGoogleアカウントでログインしてください。</p>
+      <button id="mypageLoginBtn" class="btn-primary">Googleでログイン</button>
+    </div>
+
+    <!-- タブ -->
+    <div id="mypageTabs" class="mypage-tabs" style="display: none;">
+      <button class="tab-btn active" data-tab="posted">自分の投稿</button>
+      <button class="tab-btn" data-tab="rated">評価済み</button>
+    </div>
+
+    <!-- リストヘッダー -->
+    <div id="mypageHeader" class="list-header" style="display: none;">
+      <div class="list-header-top">
+        <p id="tanukiCount">0件</p>
+      </div>
+    </div>
+
+    <div id="tanukiList" class="tanuki-grid">
+      <!-- たぬきカードがここに表示されます -->
+    </div>
+  </div>
+
+  <!-- ローディング -->
+  <div id="loading" class="loading">
+    読み込み中...
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+
+  <!-- アプリのJavaScript -->
+  <script src="js/config.js?v=26"></script>
+  <script src="js/utils.js?v=26"></script>
+  <script src="js/firebase-init.js?v=26"></script>
+  <script src="js/auth.js?v=26"></script>
+  <script src="js/mypage.js?v=26"></script>
+</body>
+</html>

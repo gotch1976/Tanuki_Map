@@ -253,6 +253,14 @@ function initMap() {
     });
   }
 
+  // マイページボタン
+  const mypageBtn = document.getElementById('mypageBtn');
+  if (mypageBtn) {
+    mypageBtn.addEventListener('click', () => {
+      window.location.href = 'mypage.html';
+    });
+  }
+
   // リロードボタン
   const reloadBtn = document.getElementById('reloadBtn');
   if (reloadBtn) {

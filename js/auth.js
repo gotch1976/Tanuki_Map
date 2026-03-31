@@ -119,12 +119,16 @@ function updateUI(user) {
     if (userPhoto) userPhoto.src = user.photoURL || '';
     if (userName) userName.textContent = user.displayName || 'ユーザー';
     if (addTanukiBtn) addTanukiBtn.style.display = 'block';
+    const mypageBtn = document.getElementById('mypageBtn');
+    if (mypageBtn) mypageBtn.style.display = 'inline-block';
 
   } else {
     // 匿名または未ログイン（たぬき投稿不可）
     if (loginBtn) loginBtn.style.display = 'block';
     if (userInfo) userInfo.style.display = 'none';
     if (addTanukiBtn) addTanukiBtn.style.display = 'none';
+    const mypageBtn = document.getElementById('mypageBtn');
+    if (mypageBtn) mypageBtn.style.display = 'none';
   }
 }
 
