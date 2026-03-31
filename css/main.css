@@ -317,6 +317,18 @@ form {
   background-color: rgba(255,255,255,0.2);
 }
 
+.icon-btn-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  vertical-align: middle;
+}
+
+.icon-btn-label svg {
+  flex-shrink: 0;
+}
+
 /* 右上固定のユーザー情報 */
 .user-fixed {
   position: fixed;
