@@ -17,28 +17,44 @@ body {
 header {
   background-color: #8B4513;
   color: white;
-  padding: 1rem;
+  padding: 0 1rem;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  height: 70px;
+  height: 48px;
   z-index: 1000;
+  display: flex;
+  align-items: center;
 }
 
 .header-container {
   max-width: 1200px;
   margin: 0 auto;
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1rem;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 header h1 {
-  font-size: 1.5rem;
+  font-size: 1.1rem;
   font-weight: bold;
+  white-space: nowrap;
 }
 
 .header-actions {
@@ -240,7 +256,7 @@ form {
 /* トースト通知 */
 #toastContainer {
   position: fixed;
-  top: 80px;
+  top: 56px;
   right: 1rem;
   z-index: 4000;
   display: flex;
@@ -282,57 +298,37 @@ form {
   border: 1px solid #ffeeba;
 }
 
-/* リロードボタン */
-.reload-btn {
-  background: none;
+/* ヘッダーアイコンボタン（統一スタイル） */
+.header-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.15);
   border: none;
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  transition: transform 0.3s;
-}
-
-.reload-btn:hover {
-  transform: rotate(180deg);
-}
-
-.reload-btn:active {
-  transform: rotate(360deg);
-}
-
-/* アイコンボタン（リストなど） */
-.icon-btn {
-  background: transparent;
-  border: none;
-  font-size: 1.4rem;
-  cursor: pointer;
-  padding: 4px 8px;
   color: white;
-  border-radius: 4px;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
   transition: background-color 0.2s;
 }
 
-.icon-btn:hover {
-  background-color: rgba(255,255,255,0.2);
+.header-icon-btn:hover {
+  background-color: rgba(255,255,255,0.3);
 }
 
-.icon-btn-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: 0.85rem;
-  vertical-align: middle;
+.header-icon-btn:active {
+  background-color: rgba(255,255,255,0.4);
 }
 
-.icon-btn-label svg {
+.header-icon-btn svg {
   flex-shrink: 0;
+  display: block;
 }
 
 /* 右上固定のユーザー情報 */
 .user-fixed {
   position: fixed;
-  top: 80px;
+  top: 56px;
   right: 10px;
   z-index: 1100;
   display: flex;
@@ -414,7 +410,7 @@ form {
 /* 新規たぬき通知バナー */
 .new-tanuki-notification {
   position: fixed;
-  top: 80px;
+  top: 56px;
   left: 50%;
   transform: translateX(-50%);
   background: white;
@@ -484,15 +480,7 @@ form {
 /* レスポンシブ */
 @media (max-width: 768px) {
   header h1 {
-    font-size: 1.2rem;
-  }
-
-  .header-container {
-    flex-wrap: wrap;
-  }
-
-  .header-actions {
-    flex-wrap: wrap;
+    font-size: 1rem;
   }
 
   #userInfo span {
@@ -505,7 +493,7 @@ form {
   }
 
   .new-tanuki-notification {
-    top: 75px;
+    top: 56px;
     width: 95%;
     padding: 0.75rem;
   }

@@ -6,16 +6,16 @@
   <title>たぬきリスト | Tanuki Map</title>
 
   <!-- カスタムCSS -->
-  <link rel="stylesheet" href="css/main.css?v=19">
-  <link rel="stylesheet" href="css/list.css?v=19">
+  <link rel="stylesheet" href="css/main.css?v=26">
+  <link rel="stylesheet" href="css/list.css?v=26">
 </head>
 <body>
   <!-- ヘッダー -->
   <header>
     <div class="header-container">
-      <div style="display: flex; gap: 0.5rem; align-items: center;">
-        <button id="backBtn" class="btn-secondary">&larr; 地図に戻る</button>
-        <button id="mypageBtn" class="icon-btn icon-btn-label" title="マイページ" style="display: none;"><svg width="20" height="20" viewBox="0 0 24 24" fill="white" stroke="none"><circle cx="12" cy="16" r="4"/><circle cx="6" cy="8" r="2"/><circle cx="18" cy="8" r="2"/><circle cx="9" cy="5" r="1.5"/><circle cx="15" cy="5" r="1.5"/></svg> マイページ</button>
+      <div class="header-left">
+        <button id="backBtn" class="header-icon-btn" title="地図に戻る"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+        <button id="mypageBtn" class="header-icon-btn" title="マイページ" style="display: none;"><svg width="18" height="18" viewBox="0 0 24 24" fill="white" stroke="none"><circle cx="12" cy="16" r="4"/><circle cx="6" cy="8" r="2"/><circle cx="18" cy="8" r="2"/><circle cx="9" cy="5" r="1.5"/><circle cx="15" cy="5" r="1.5"/></svg></button>
       </div>
       <h1><img src="img/tanuki-marker.png" alt="たぬき" style="width: 28px; height: 28px; vertical-align: middle;"> たぬきリスト</h1>
       <div id="userInfo" style="display: none;">
@@ -59,10 +59,10 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 
   <!-- アプリのJavaScript -->
-  <script src="js/config.js?v=20"></script>
-  <script src="js/utils.js?v=20"></script>
-  <script src="js/firebase-init.js?v=20"></script>
-  <script src="js/auth.js?v=20"></script>
-  <script src="js/list.js?v=21"></script>
+  <script src="js/config.js?v=26"></script>
+  <script src="js/utils.js?v=26"></script>
+  <script src="js/firebase-init.js?v=26"></script>
+  <script src="js/auth.js?v=26"></script>
+  <script src="js/list.js?v=26"></script>
 </body>
 </html>

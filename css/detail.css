@@ -44,7 +44,7 @@
   max-width: 800px;
   margin: 0 auto;
   padding: 2rem 1rem;
-  padding-top: calc(70px + 2rem); /* ヘッダー分のスペースを確保 */
+  padding-top: calc(48px + 2rem); /* ヘッダー分のスペースを確保 */
 }
 
 .detail-content {
@@ -128,7 +128,7 @@
 @media (max-width: 768px) {
   .detail-container {
     padding: 1rem;
-    padding-top: calc(70px + 1rem); /* モバイルでもヘッダー分のスペースを確保 */
+    padding-top: calc(48px + 1rem); /* モバイルでもヘッダー分のスペースを確保 */
   }
 
   .info-section {

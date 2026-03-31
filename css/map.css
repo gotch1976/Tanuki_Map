@@ -2,12 +2,12 @@
 
 #map {
   position: fixed;
-  top: 70px;
+  top: 48px;
   left: 0;
   right: 0;
   bottom: 0;
   z-index: 1;
-  height: calc(100vh - 70px);
+  height: calc(100vh - 48px);
   /* iOS長押しメニューを無効化 */
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -101,7 +101,7 @@
 
 @media (max-width: 768px) {
   #map {
-    top: 70px;
+    top: 48px;
   }
 
   .fab {
